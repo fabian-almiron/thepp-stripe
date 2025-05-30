@@ -1,0 +1,46 @@
+.step-indicator {
+    padding: 14px 50px;
+    background-color: #f3f4f6;
+    border-radius: 0;
+    transition: all 0.3s ease;
+}
+
+.active-step {
+    background-color: #f2eae5;
+    border: 1px solid;
+    font-weight: bold;
+    color: #010101;
+}
+
+.step-content {
+    transition: all 0.3s ease;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Payment form styles */
+.payment-form-container {
+    border: 1px solid;
+    padding: 20px;
+    max-width: 670px;
+    margin-top: 15px;
+}
+
+#card-element {
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+}
+
+#card-errors {
+    color: #dc2626;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+} 

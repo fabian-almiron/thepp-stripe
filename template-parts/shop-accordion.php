@@ -1,0 +1,295 @@
+<!--- accordion--->
+
+<?php
+// Check if ACF is active
+if (function_exists('have_rows')):
+
+    // Use the correct main repeater field name: 'tabs_accordions'
+    if (have_rows('tabs_accordions')):
+        echo '<div class="tabs-accordion-wrapper">';
+        echo '<div class="tabs">';
+
+        // Create tab buttons - Loop through the outer repeater first
+        $tab_index = 1;
+        while (have_rows('tabs_accordions')): the_row();
+            // Now loop through the inner 'tab_item' repeater
+            if (have_rows('tab_item')):
+                while(have_rows('tab_item')): the_row();
+                    $tab_title = get_sub_field('tab_title'); // Correct sub-field for tab title
+                    echo '<button class="tab-button' . ($tab_index === 1 ? ' active' : '') . '" data-tab="tab' . $tab_index . '">' . esc_html($tab_title) . '</button>';
+                    $tab_index++;
+                endwhile;
+            endif;
+        endwhile;
+
+        echo '</div>'; // Close tabs
+
+        // Reset the loop to iterate over tabs again for content
+        $tab_index = 1;
+        // Loop through the outer repeater again for content
+        while (have_rows('tabs_accordions')): the_row(); 
+            // Loop through the inner 'tab_item' repeater for content
+            if (have_rows('tab_item')): 
+                while(have_rows('tab_item')): the_row();
+                    echo '<div class="tab-content" id="tab' . $tab_index . '"' . ($tab_index === 1 ? ' style="display: block;"' : ' style="display: none;"') . '>';
+                    // Now loop through the 'accordion' repeater
+                    if (have_rows('accordion')): 
+                        echo '<div class="accordion">';
+                        while (have_rows('accordion')): the_row();
+                            $accordion_title = get_sub_field('accordion_item_title'); // Correct sub-field name
+                            $accordion_content = get_sub_field('accordion_item_content'); // Correct sub-field name
+
+                            echo '<div class="accordion-item">';
+                            if ($accordion_title):
+                                echo '<div class="accordion-header">';
+                                echo '<span>' . esc_html($accordion_title) . '</span>';
+                                echo '<button class="toggle-btn">+</button>';
+                                echo '</div>';
+                            endif;
+                            if ($accordion_content):
+                                echo '<div class="accordion-content">';
+                                echo $accordion_content; // Assuming content is safe HTML from a WYSIWYG field
+                                echo '</div>';
+                            endif;
+                            echo '</div>'; // Close accordion-item
+                        endwhile;
+                        echo '</div>'; // Close accordion
+                    endif;
+                    echo '</div>'; // Close tab-content
+                    $tab_index++;
+                endwhile;
+            endif;
+        endwhile;
+
+        echo '</div>'; // Close tabs-accordion-wrapper
+    endif;
+
+endif;
+?>
+<!--- accordion--->
+
+<style>
+
+/* accordion */
+  .tabs-accordion-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+    border: 1px solid #ccc;
+}
+
+.tabs {
+    display: flex;
+    margin-bottom: 10px;
+    border-bottom: 1px solid;
+    padding: -2px 30px;
+    padding: 0px 50px;
+}
+
+.tab-button {
+    padding: 20px 17px;
+    cursor: pointer;
+    border: none;
+    background-color: transparent;
+    margin-right: 5px;
+    transition: color 0.3s;
+    position: relative;
+    font-size: 16px;
+}
+
+.tab-button.active {
+    color: #000;
+}
+
+.tab-button.active::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -2px;
+    height: 2px;
+    background-color: #000;
+    transition: width 0.3s;
+    width: 100%;
+}
+
+.tab-content {
+    display: none;
+    padding: 40px 60px;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.accordion {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.accordion-item {
+    /* border: 1px solid #ccc; */
+    /* margin-bottom: 5px; */
+    border-bottom: 1px solid;
+    padding: 6px 0px;
+}
+
+.accordion-header {
+    /* background-color: #f1f1f1; */
+    padding: 10px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* border-bottom: 1px solid; */
+    /* border-top: 1px solid; */
+}
+
+.accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    display: block !important;
+    margin: 0px;
+}
+.accordion-content p {
+    padding: 10px;
+    margin: 0;
+}
+button.toggle-btn {
+    border: none;
+    font-size: 25px;
+    padding: 0;
+    margin: 0;
+    font-weight: 600;
+}
+
+button.tab-button {
+    border: none;
+    outline: none; /* Remove the focus outline */
+}
+
+button.tab-button:hover {
+    border: none;
+    outline: none; /* Remove the focus outline */
+}
+
+button.tab-button:hover {
+    border: none;
+    outline: none; /* Ensure no outline on hover */
+}
+
+button.tab-button:focus {
+    outline: none; /* Remove the focus outline when the button is focused */
+}
+
+
+.accordion-header.active .toggle-btn {
+    transform: rotate(45deg);
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.accordion-content.open {
+    max-height: none;
+}
+
+.accordion-item span {
+    font-family: 'Sofia Pro Regular' !important;
+    font-size: 25px;
+}
+
+</style>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+
+    // Tab and Accordion Handling
+    // Open the first tab by default
+    const firstTabContent = document.querySelector('.tab-content');
+    if (firstTabContent) {
+        firstTabContent.style.display = 'block';
+        firstTabContent.classList.add('active');
+    }
+
+    // Open the first accordion item in each tab by default
+    document.querySelectorAll('.tab-content').forEach(tabContent => {
+        const firstAccordionContent = tabContent.querySelector('.accordion-content');
+        if (firstAccordionContent) {
+            firstAccordionContent.style.maxHeight = firstAccordionContent.scrollHeight + "px";
+            firstAccordionContent.previousElementSibling.classList.add('active');
+        }
+    });
+
+    // Tab functionality
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.addEventListener('click', function() {
+            const tabId = this.getAttribute('data-tab');
+
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+                tab.classList.remove('active');
+            });
+
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show the selected tab content
+            const selectedTabContent = document.getElementById(tabId);
+            selectedTabContent.style.display = 'block';
+            selectedTabContent.classList.add('active');
+
+            // Add active class to the clicked button
+            this.classList.add('active');
+
+            // Open the first accordion item in the selected tab
+            const firstAccordionContent = selectedTabContent.querySelector('.accordion-content');
+            if (firstAccordionContent) {
+                // Close all accordion contents in the selected tab
+                selectedTabContent.querySelectorAll('.accordion-content').forEach(content => {
+                    content.style.maxHeight = null;
+                    content.previousElementSibling.classList.remove('active');
+                });
+
+                // Open the first accordion item
+                firstAccordionContent.style.maxHeight = firstAccordionContent.scrollHeight + "px";
+                firstAccordionContent.previousElementSibling.classList.add('active');
+            }
+        });
+    });
+
+    // Accordion functionality
+    document.querySelectorAll('.accordion-header').forEach(header => {
+        header.addEventListener('click', function() {
+            const content = this.nextElementSibling;
+            
+            // Close all other accordion contents in the same tab
+            this.closest('.accordion').querySelectorAll('.accordion-content').forEach(item => {
+                if (item !== content) {
+                    item.style.maxHeight = null;
+                    item.previousElementSibling.classList.remove('active');
+                }
+            });
+
+            // Toggle the clicked accordion content
+            if (content.style.maxHeight) {
+                content.style.maxHeight = null;
+                this.classList.remove('active');
+            } else {
+                content.style.maxHeight = content.scrollHeight + "px";
+                this.classList.add('active');
+            }
+        });
+    });
+});
+</script>

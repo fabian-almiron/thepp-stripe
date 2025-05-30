@@ -1,0 +1,182 @@
+[13-May-2025 03:58:21 UTC] PHP Notice:  Function _load_textdomain_just_in_time was called <strong>incorrectly</strong>. Translation loading for the <code>acf</code> domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the <code>init</code> action or later. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.7.0.) in /www/wwwroot/pdev.fabishomelab.com/wp-includes/functions.php on line 6121
+[13-May-2025 03:58:21 UTC] handle_user_access_control function called.
+[13-May-2025 03:58:21 UTC] Current URL (not logged in): 
+[13-May-2025 03:58:22 UTC] PHP Notice:  Function _load_textdomain_just_in_time was called <strong>incorrectly</strong>. Translation loading for the <code>acf</code> domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the <code>init</code> action or later. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.7.0.) in /www/wwwroot/pdev.fabishomelab.com/wp-includes/functions.php on line 6121
+[13-May-2025 03:58:22 UTC] handle_user_access_control function called.
+[13-May-2025 03:58:22 UTC] Current URL (not logged in): 
+[13-May-2025 03:58:27 UTC] PHP Notice:  Function _load_textdomain_just_in_time was called <strong>incorrectly</strong>. Translation loading for the <code>acf</code> domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the <code>init</code> action or later. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.7.0.) in /www/wwwroot/pdev.fabishomelab.com/wp-includes/functions.php on line 6121
+[13-May-2025 03:58:28 UTC] handle_user_access_control function called.
+[13-May-2025 03:58:28 UTC] Current URL: /wp-admin/admin-ajax.php
+[13-May-2025 03:58:52 UTC] PHP Notice:  Function _load_textdomain_just_in_time was called <strong>incorrectly</strong>. Translation loading for the <code>acf</code> domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the <code>init</code> action or later. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.7.0.) in /www/wwwroot/pdev.fabishomelab.com/wp-includes/functions.php on line 6121
+[13-May-2025 03:58:52 UTC] handle_user_access_control function called.
+[13-May-2025 03:58:52 UTC] Current URL (not logged in): /
+[13-May-2025 03:58:52 UTC] PHP Notice:  Function _load_textdomain_just_in_time was called <strong>incorrectly</strong>. Translation loading for the <code>acf</code> domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the <code>init</code> action or later. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.7.0.) in /www/wwwroot/pdev.fabishomelab.com/wp-includes/functions.php on line 6121
+[13-May-2025 03:58:53 UTC] handle_user_access_control function called.
+[13-May-2025 03:58:53 UTC] Current URL (not logged in): /wp-cron.php?doing_wp_cron=1747108732.6656761169433593750000
+[13-May-2025 03:58:55 UTC] PHP Notice:  Function _load_textdomain_just_in_time was called <strong>incorrectly</strong>. Translation loading for the <code>acf</code> domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the <code>init</code> action or later. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.7.0.) in /www/wwwroot/pdev.fabishomelab.com/wp-includes/functions.php on line 6121
+[13-May-2025 03:58:56 UTC] handle_user_access_control function called.
+[13-May-2025 03:58:56 UTC] Current URL (not logged in): /checkout/?checkout_product_id=41936
+[13-May-2025 03:58:56 UTC] [Checkout Page] Direct checkout link detected for product ID: 41936
+[13-May-2025 03:58:56 UTC] [Checkout Page] Product ID 41936 (Stripe Price ID: price_1RO0cMFSIMTXJoJ29y1oJQ5b) added to cart via direct link. Cart: Array
+(
+    [41936] => Array
+        (
+            [product_id] => 41936
+            [quantity] => 1
+            [name] => The Piped Peony Academy
+            [stripe_price_id] => price_1RO0cMFSIMTXJoJ29y1oJQ5b
+            [variation_name] => 
+            [product_type] => subscription
+            [image_url] => 
+        )
+
+)
+
+[13-May-2025 03:58:56 UTC] PHP Notice:  Function _load_textdomain_just_in_time was called <strong>incorrectly</strong>. Translation loading for the <code>acf</code> domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the <code>init</code> action or later. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.7.0.) in /www/wwwroot/pdev.fabishomelab.com/wp-includes/functions.php on line 6121
+[13-May-2025 03:58:56 UTC] handle_user_access_control function called.
+[13-May-2025 03:58:56 UTC] Current URL (not logged in): /checkout/
+[13-May-2025 03:58:57 UTC] Cart Contents: Array
+(
+    [41936] => Array
+        (
+            [product_id] => 41936
+            [quantity] => 1
+            [name] => The Piped Peony Academy
+            [stripe_price_id] => price_1RO0cMFSIMTXJoJ29y1oJQ5b
+            [variation_name] => 
+            [product_type] => subscription
+            [image_url] => 
+        )
+
+)
+
+[13-May-2025 03:58:57 UTC] DEBUG ACF Fields for post 41936
+[13-May-2025 03:58:57 UTC] Product Type: subscription
+[13-May-2025 03:58:57 UTC] Free Trial Days: 4
+[13-May-2025 03:58:57 UTC] Subscription Price: 15
+[13-May-2025 03:58:57 UTC] All Fields: Array
+(
+    [product_type] => subscription
+    [subscription_price] => 15
+    [subscription_length] => monthly
+    [subscription_free_trial_days] => 4
+    [product_gallery] => 
+    [sync_with_stripe] => 1
+)
+
+[13-May-2025 03:58:57 UTC] Stripe Product ID: prod_SIbqtuZiPreYcg
+[13-May-2025 03:58:57 UTC] Stripe Price ID: price_1RO0cMFSIMTXJoJ29y1oJQ5b
+[13-May-2025 03:58:57 UTC] Processing subscription product 41936 with 4 trial days
+[13-May-2025 03:58:57 UTC] Free trial product found. Renewal date: May 16, 2025
+[13-May-2025 03:58:57 UTC] Line total for product 41936: 0
+[13-May-2025 03:58:57 UTC] Final total price: 0
+[13-May-2025 03:58:57 UTC] POST Data: Array
+(
+)
+
+[13-May-2025 03:58:57 UTC] Session Data: Array
+(
+    [cart] => Array
+        (
+            [41936] => Array
+                (
+                    [product_id] => 41936
+                    [quantity] => 1
+                    [name] => The Piped Peony Academy
+                    [stripe_price_id] => price_1RO0cMFSIMTXJoJ29y1oJQ5b
+                    [variation_name] => 
+                    [product_type] => subscription
+                    [image_url] => 
+                )
+
+        )
+
+    [csrf_token] => 9ade4b99785f14272adf748f69ff62988dbe3f79343792b46bec63dfd1388916
+)
+
+[13-May-2025 03:58:57 UTC] ==== CART CONTENTS ====
+[13-May-2025 03:58:57 UTC] Item #41936
+[13-May-2025 03:58:57 UTC] Product ID: 41936
+[13-May-2025 03:58:57 UTC] Quantity: 1
+[13-May-2025 03:58:57 UTC] Variation: None
+[13-May-2025 03:58:57 UTC] Stripe Product ID: Not set
+[13-May-2025 03:58:57 UTC] Stripe Price ID: price_1RO0cMFSIMTXJoJ29y1oJQ5b
+[13-May-2025 03:58:57 UTC] ---------------------
+[13-May-2025 03:59:13 UTC] PHP Notice:  Function _load_textdomain_just_in_time was called <strong>incorrectly</strong>. Translation loading for the <code>acf</code> domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the <code>init</code> action or later. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.7.0.) in /www/wwwroot/pdev.fabishomelab.com/wp-includes/functions.php on line 6121
+[13-May-2025 03:59:14 UTC] handle_user_access_control function called.
+[13-May-2025 03:59:14 UTC] Current URL (not logged in): /wp-admin/admin-ajax.php
+[13-May-2025 03:59:14 UTC] PHP Notice:  Function _load_textdomain_just_in_time was called <strong>incorrectly</strong>. Translation loading for the <code>acf</code> domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the <code>init</code> action or later. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.7.0.) in /www/wwwroot/pdev.fabishomelab.com/wp-includes/functions.php on line 6121
+[13-May-2025 03:59:15 UTC] handle_user_access_control function called.
+[13-May-2025 03:59:15 UTC] Current URL (not logged in): /wp-admin/admin-ajax.php
+[13-May-2025 03:59:15 UTC] [Checkout Session] Decoded cart data: Array
+(
+    [41936] => Array
+        (
+            [product_id] => 41936
+            [quantity] => 1
+            [name] => The Piped Peony Academy
+            [stripe_price_id] => price_1RO0cMFSIMTXJoJ29y1oJQ5b
+            [variation_name] => 
+            [product_type] => subscription
+            [image_url] => 
+        )
+
+)
+
+[13-May-2025 03:59:27 UTC] PHP Notice:  Function _load_textdomain_just_in_time was called <strong>incorrectly</strong>. Translation loading for the <code>acf</code> domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the <code>init</code> action or later. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.7.0.) in /www/wwwroot/pdev.fabishomelab.com/wp-includes/functions.php on line 6121
+[13-May-2025 03:59:28 UTC] handle_user_access_control function called.
+[13-May-2025 03:59:28 UTC] Current URL: /wp-admin/admin-ajax.php
+[13-May-2025 03:59:40 UTC] PHP Notice:  Function _load_textdomain_just_in_time was called <strong>incorrectly</strong>. Translation loading for the <code>acf</code> domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the <code>init</code> action or later. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.7.0.) in /www/wwwroot/pdev.fabishomelab.com/wp-includes/functions.php on line 6121
+[13-May-2025 03:59:40 UTC] handle_user_access_control function called.
+[13-May-2025 03:59:40 UTC] Current URL (not logged in): /wp-json/stripe/v1/webhook
+[13-May-2025 03:59:40 UTC] PHP Notice:  Function _load_textdomain_just_in_time was called <strong>incorrectly</strong>. Translation loading for the <code>acf</code> domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the <code>init</code> action or later. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.7.0.) in /www/wwwroot/pdev.fabishomelab.com/wp-includes/functions.php on line 6121
+[13-May-2025 03:59:40 UTC] User 11292 auto-logged in after registration via webhook.
+[13-May-2025 03:59:41 UTC] PHP Deprecated:  Calling get_class() without arguments is deprecated in /www/wwwroot/pdev.fabishomelab.com/wp-content/plugins/wp-mail-smtp/vendor_prefixed/google/apiclient/src/Http/REST.php on line 49
+[13-May-2025 03:59:41 UTC] PHP Deprecated:  Calling get_class() without arguments is deprecated in /www/wwwroot/pdev.fabishomelab.com/wp-content/plugins/wp-mail-smtp/vendor_prefixed/google/apiclient/src/Http/REST.php on line 49
+[13-May-2025 03:59:41 UTC] handle_user_access_control function called.
+[13-May-2025 03:59:41 UTC] Current URL (not logged in): /wp-cron.php?doing_wp_cron=1747108780.5883240699768066406250
+[13-May-2025 03:59:41 UTC] User ID 11292 role set to subscriber initially in custom_user_registered.
+[13-May-2025 03:59:41 UTC] PHP Deprecated:  Calling get_class() without arguments is deprecated in /www/wwwroot/pdev.fabishomelab.com/wp-content/plugins/wp-mail-smtp/vendor_prefixed/google/apiclient/src/Http/REST.php on line 49
+[13-May-2025 03:59:41 UTC] PHP Deprecated:  Calling get_class() without arguments is deprecated in /www/wwwroot/pdev.fabishomelab.com/wp-content/plugins/wp-mail-smtp/vendor_prefixed/google/apiclient/src/Http/REST.php on line 49
+[13-May-2025 03:59:43 UTC] PHP Notice:  Function _load_textdomain_just_in_time was called <strong>incorrectly</strong>. Translation loading for the <code>acf</code> domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the <code>init</code> action or later. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.7.0.) in /www/wwwroot/pdev.fabishomelab.com/wp-includes/functions.php on line 6121
+[13-May-2025 03:59:43 UTC] PHP Notice:  Function _load_textdomain_just_in_time was called <strong>incorrectly</strong>. Translation loading for the <code>acf</code> domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the <code>init</code> action or later. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.7.0.) in /www/wwwroot/pdev.fabishomelab.com/wp-includes/functions.php on line 6121
+[13-May-2025 03:59:44 UTC] PHP Notice:  Function _load_textdomain_just_in_time was called <strong>incorrectly</strong>. Translation loading for the <code>acf</code> domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the <code>init</code> action or later. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.7.0.) in /www/wwwroot/pdev.fabishomelab.com/wp-includes/functions.php on line 6121
+[13-May-2025 03:59:44 UTC] handle_user_access_control function called.
+[13-May-2025 03:59:44 UTC] Current URL (not logged in): /wp-json/stripe/v1/webhook
+[13-May-2025 03:59:44 UTC] handle_user_access_control function called.
+[13-May-2025 03:59:44 UTC] Current URL (not logged in): /wp-json/stripe/v1/webhook
+[13-May-2025 03:59:44 UTC] handle_user_access_control function called.
+[13-May-2025 03:59:44 UTC] Current URL (not logged in): /checkout-success?session_id=cs_test_a1cd7Sa50L8S5SGiA8NHFy6Wio5TxdWEVJBqrhUYro88LZO9o6sVh2DN5u
+[13-May-2025 03:59:44 UTC] PHP Notice:  Function _load_textdomain_just_in_time was called <strong>incorrectly</strong>. Translation loading for the <code>acf</code> domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the <code>init</code> action or later. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.7.0.) in /www/wwwroot/pdev.fabishomelab.com/wp-includes/functions.php on line 6121
+[13-May-2025 03:59:45 UTC] handle_user_access_control function called.
+[13-May-2025 03:59:45 UTC] Current URL (not logged in): /checkout-success/?session_id=cs_test_a1cd7Sa50L8S5SGiA8NHFy6Wio5TxdWEVJBqrhUYro88LZO9o6sVh2DN5u
+[13-May-2025 03:59:49 UTC] PHP Notice:  Function _load_textdomain_just_in_time was called <strong>incorrectly</strong>. Translation loading for the <code>acf</code> domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the <code>init</code> action or later. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.7.0.) in /www/wwwroot/pdev.fabishomelab.com/wp-includes/functions.php on line 6121
+[13-May-2025 03:59:49 UTC] handle_user_access_control function called.
+[13-May-2025 03:59:49 UTC] Current URL (not logged in): /wp-admin/admin-ajax.php
+[13-May-2025 04:00:00 UTC] PHP Notice:  Function _load_textdomain_just_in_time was called <strong>incorrectly</strong>. Translation loading for the <code>acf</code> domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the <code>init</code> action or later. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.7.0.) in /www/wwwroot/pdev.fabishomelab.com/wp-includes/functions.php on line 6121
+[13-May-2025 04:00:01 UTC] handle_user_access_control function called.
+[13-May-2025 04:00:01 UTC] Current URL: /wp-admin/admin-ajax.php
+[13-May-2025 04:00:01 UTC] PHP Notice:  Function _load_textdomain_just_in_time was called <strong>incorrectly</strong>. Translation loading for the <code>acf</code> domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the <code>init</code> action or later. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.7.0.) in /www/wwwroot/pdev.fabishomelab.com/wp-includes/functions.php on line 6121
+[13-May-2025 04:00:02 UTC] handle_user_access_control function called.
+[13-May-2025 04:00:02 UTC] Current URL (not logged in): /wp-cron.php?doing_wp_cron=1747108801.3198659420013427734375
+[13-May-2025 04:00:42 UTC] PHP Notice:  Function _load_textdomain_just_in_time was called <strong>incorrectly</strong>. Translation loading for the <code>acf</code> domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the <code>init</code> action or later. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.7.0.) in /www/wwwroot/pdev.fabishomelab.com/wp-includes/functions.php on line 6121
+[13-May-2025 04:00:42 UTC] handle_user_access_control function called.
+[13-May-2025 04:00:42 UTC] Current URL (not logged in): /wp-login.php?redirect_to=https%3A%2F%2Fpdev.fabishomelab.com%2Fmy-account%2F
+[13-May-2025 04:00:42 UTC] PHP Notice:  Function _load_textdomain_just_in_time was called <strong>incorrectly</strong>. Translation loading for the <code>acf</code> domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the <code>init</code> action or later. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.7.0.) in /www/wwwroot/pdev.fabishomelab.com/wp-includes/functions.php on line 6121
+[13-May-2025 04:00:43 UTC] handle_user_access_control function called.
+[13-May-2025 04:00:43 UTC] Current URL (not logged in): /wp-cron.php?doing_wp_cron=1747108842.6421780586242675781250
+[13-May-2025 04:00:49 UTC] PHP Notice:  Function _load_textdomain_just_in_time was called <strong>incorrectly</strong>. Translation loading for the <code>acf</code> domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the <code>init</code> action or later. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.7.0.) in /www/wwwroot/pdev.fabishomelab.com/wp-includes/functions.php on line 6121
+[13-May-2025 04:00:50 UTC] handle_user_access_control function called.
+[13-May-2025 04:00:50 UTC] Current URL (not logged in): /checkout-success/?session_id=cs_test_a1cd7Sa50L8S5SGiA8NHFy6Wio5TxdWEVJBqrhUYro88LZO9o6sVh2DN5u
+[13-May-2025 04:00:51 UTC] PHP Notice:  Function _load_textdomain_just_in_time was called <strong>incorrectly</strong>. Translation loading for the <code>acf</code> domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the <code>init</code> action or later. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.7.0.) in /www/wwwroot/pdev.fabishomelab.com/wp-includes/functions.php on line 6121
+[13-May-2025 04:00:51 UTC] handle_user_access_control function called.
+[13-May-2025 04:00:51 UTC] Current URL: /wp-admin/admin-ajax.php
+[13-May-2025 04:00:54 UTC] PHP Notice:  Function _load_textdomain_just_in_time was called <strong>incorrectly</strong>. Translation loading for the <code>acf</code> domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the <code>init</code> action or later. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.7.0.) in /www/wwwroot/pdev.fabishomelab.com/wp-includes/functions.php on line 6121
+[13-May-2025 04:00:54 UTC] handle_user_access_control function called.
+[13-May-2025 04:00:54 UTC] Current URL (not logged in): /wp-admin/admin-ajax.php
+[13-May-2025 04:00:54 UTC] PHP Notice:  Function _load_textdomain_just_in_time was called <strong>incorrectly</strong>. Translation loading for the <code>acf</code> domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the <code>init</code> action or later. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.7.0.) in /www/wwwroot/pdev.fabishomelab.com/wp-includes/functions.php on line 6121
+[13-May-2025 04:00:55 UTC] handle_user_access_control function called.
+[13-May-2025 04:00:55 UTC] Current URL: /wp-admin/users.php?s=ninthsouthdigital%40gmail.com&_wpnonce=ed1a25d843&_wp_http_referer=%2Fwp-admin%2Fusers.php%3Fdelete_count%3D1%26update%3Ddel&action=-1&new_role=&ure_add_role=&ure_revoke_role=&primary_role=pending&paged=1&action2=-1&new_role2=&ure_add_role_2=&ure_revoke_role_2=
+[13-May-2025 04:00:56 UTC] PHP Notice:  Function _load_textdomain_just_in_time was called <strong>incorrectly</strong>. Translation loading for the <code>acf</code> domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the <code>init</code> action or later. Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.7.0.) in /www/wwwroot/pdev.fabishomelab.com/wp-includes/functions.php on line 6121
+[13-May-2025 04:00:56 UTC] handle_user_access_control function called.
+[13-May-2025 04:00:56 UTC] Current URL: /wp-admin/users.php?s=ninthsouthdigital%40gmail.com&action=-1&new_role&ure_add_role&ure_revoke_role&primary_role=pending&paged=1&action2=-1&new_role2&ure_add_role_2&ure_revoke_role_2

@@ -1,0 +1,2468 @@
+<?php
+/**
+ * Theme functions and definitions
+ *
+ * @package HelloElementorChild
+ */
+
+// Ensure WordPress environment is loaded
+if (!defined('ABSPATH')) {
+    exit; // Exit if accessed directly
+}
+
+// // Load WordPress functions - REMOVED as it's not needed here and can cause issues
+// require_once ABSPATH . 'wp-load.php';
+
+
+// At the top of your functions.php, after the initial checks
+require_once get_stylesheet_directory() . '/vendor/autoload.php';
+
+/**
+ * Load child theme css and optional scripts
+ *
+ * @return void
+ */
+function hello_elementor_child_enqueue_scripts() {
+	wp_enqueue_style(
+		'hello-elementor-child-style',
+		get_stylesheet_directory_uri() . '/style.css',
+		[
+			'hello-elementor-theme-style',
+		],
+		'1.0.0'
+	);
+}
+
+// Remove the old enqueue action if it exists
+remove_action('wp_enqueue_scripts', 'hello_elementor_child_enqueue_scripts');
+
+// Add our new enqueue function
+function checkout_enqueue_scripts() {
+    // Enqueue main stylesheet
+    wp_enqueue_style(
+        'hello-elementor-child-style',
+        get_stylesheet_directory_uri() . '/style.css',
+        ['hello-elementor-theme-style'],
+        '1.0.0'
+    );
+
+    if (is_page('checkout')) {
+        // Enqueue Stripe
+        wp_enqueue_script('stripe-js', 'https://js.stripe.com/v3/', [], null, true);
+        
+        // Enqueue checkout specific styles
+        // wp_enqueue_style(
+        //     'checkout-styles',
+        //     get_stylesheet_directory_uri() . '/css/checkout.css',
+        //     [],
+        //     '1.0.0'
+        // );
+        
+        // Create and pass the nonce and other data
+        $checkout_data = [
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'stripe_pk' => STRIPE_PUBLISHABLE_KEY,
+            'nonce' => wp_create_nonce('stripe_payment_nonce')
+        ];
+        
+        // Enqueue checkout JS
+        wp_enqueue_script(
+            'checkout-js', 
+            get_stylesheet_directory_uri() . '/js/checkout.js', 
+            ['jquery'], 
+            '1.0.0', 
+            true
+        );
+        wp_localize_script('checkout-js', 'checkoutData', $checkout_data);
+    }
+}
+add_action('wp_enqueue_scripts', 'checkout_enqueue_scripts');
+
+// if user is logged in or out 
+
+// Add CSS class for logged in and logged out users
+add_filter('body_class','er_logged_in_filter');
+
+function er_logged_in_filter($classes) {
+    if (!is_array($classes)) {
+        return array();
+    }
+    
+    if (is_user_logged_in()) {
+        $classes[] = 'logged-in-condition';
+    } else {
+        $classes[] = 'logged-out-condition';
+    }
+    
+    return array_map('sanitize_html_class', $classes);
+}
+
+
+// cregister custom category type Recipe Categories
+function custom_recipe_taxonomy() {
+	$labels = array(
+		'name'              => _x( 'Recipe Categories', 'taxonomy general name' ),
+		'singular_name'     => _x( 'Recipe Category', 'taxonomy singular name' ),
+		'search_items'      => __( 'Search Recipe Categories' ),
+		'all_items'         => __( 'All Recipe Categories' ),
+		'parent_item'       => __( 'Parent Recipe Category' ),
+		'parent_item_colon' => __( 'Parent Recipe Category:' ),
+		'edit_item'         => __( 'Edit Recipe Category' ),
+		'update_item'       => __( 'Update Recipe Category' ),
+		'add_new_item'      => __( 'Add New Recipe Category' ),
+		'new_item_name'     => __( 'New Recipe Category Name' ),
+		'menu_name'         => __( 'Recipe Category' ),
+	);
+  
+	$args = array(
+		'labels'             => $labels,
+		'hierarchical'       => true,
+		'public'             => true,
+		'show_ui'            => true,
+		'show_admin_column'  => true,
+		'show_in_nav_menus'  => true,
+		'show_tagcloud'      => true,
+	);
+  
+	register_taxonomy( 'recipecategory', 'recipes', $args );
+}
+add_action( 'init', 'custom_recipe_taxonomy', 0 );
+
+
+
+// cregister custom category type Course Level
+function custom_course_taxonomy() {
+	$labels = array(
+	  'name'              => _x( 'Course Levels', 'taxonomy general name' ),
+	  'singular_name'     => _x( 'Course Level', 'taxonomy singular name' ),
+	  'search_items'      => __( 'Search Course Levels' ),
+	  'all_items'         => __( 'All Course Levels' ),
+	  'parent_item'       => __( 'Parent Course Level' ),
+	  'parent_item_colon' => __( 'Parent Course Level:' ),
+	  'edit_item'         => __( 'Edit Course Level' ),
+	  'update_item'       => __( 'Update Course Level' ),
+	  'add_new_item'      => __( 'Add New Course Level' ),
+	  'new_item_name'     => __( 'New Course Level Name' ),
+	  'menu_name'         => __( 'Course Level' ),
+	);
+  
+	$args = array(
+	  'labels'             => $labels,
+	  'hierarchical'       => true,
+	  'public'             => true,
+	  'show_ui'            => true,
+	  'show_admin_column'  => true,
+	  'show_in_nav_menus'  => true,
+	  'show_tagcloud'      => true,
+	);
+  
+	register_taxonomy( 'courselevel', 'course', $args );
+  }
+  add_action( 'init', 'custom_course_taxonomy', 0 );
+
+
+//  ajax load more button functionality need to go here 
+
+function mytheme_enqueue_scripts() {
+    global $wp_query;
+
+    // Verify the script exists before enqueueing
+    $script_path = get_stylesheet_directory() . '/js/load-more.js';
+    if (!file_exists($script_path)) {
+        return;
+    }
+
+    wp_enqueue_script(
+        'mytheme-load-more', 
+        get_stylesheet_directory_uri() . '/js/load-more.js', 
+        array('jquery'), 
+        filemtime($script_path), 
+        true
+    );
+
+    $term_slug = '';
+    $taxonomy = '';
+
+    if (is_tax()) {
+        $queried_object = get_queried_object();
+        if ($queried_object instanceof WP_Term) {
+            $term_slug = sanitize_text_field($queried_object->slug);
+            $taxonomy = sanitize_key($queried_object->taxonomy);
+        }
+    }
+
+    wp_localize_script('mytheme-load-more', 'mytheme_load_more_params', array(
+        'ajax_url' => admin_url('admin-ajax.php'),
+        'query_vars' => wp_json_encode($wp_query->query_vars),
+        'term_slug' => $term_slug,
+        'taxonomy' => $taxonomy,
+        'security' => wp_create_nonce('load_more_posts'),
+    ));
+}
+
+add_action('wp_enqueue_scripts', 'mytheme_enqueue_scripts');
+
+
+
+// load more posts
+
+function load_more_posts() {
+    // Verify nonce
+    if (!check_ajax_referer('load_more_posts', 'security', false)) {
+        wp_send_json_error('Invalid security token');
+    }
+
+    // Sanitize and validate input
+    $paged = isset($_POST['page']) ? absint($_POST['page']) + 1 : 1;
+    $post_type = isset($_POST['post_type']) ? sanitize_key($_POST['post_type']) : 'post';
+
+    // Validate post type exists
+    if (!post_type_exists($post_type)) {
+        wp_send_json_error('Invalid post type');
+    }
+
+    $args = array(
+        'post_type' => $post_type,
+        'post_status' => 'publish',
+        'paged' => $paged,
+        'posts_per_page' => 12,
+    );
+
+    if (
+        isset($_POST['taxonomy']) && 
+        isset($_POST['term_slug']) && 
+        taxonomy_exists(sanitize_key($_POST['taxonomy']))
+    ) {
+        $args['tax_query'] = array(
+            array(
+                'taxonomy' => sanitize_key($_POST['taxonomy']),
+                'field'    => 'slug',
+                'terms'    => sanitize_text_field($_POST['term_slug']),
+            ),
+        );
+    }
+
+    $query = new WP_Query($args);
+    ob_start();
+    
+    if ($query->have_posts()) {
+        while ($query->have_posts()) {
+            $query->the_post();
+            get_template_part('template-parts/content', 'slidecards');
+        }
+        $response = ob_get_clean();
+        wp_send_json_success($response);
+    } else {
+        ob_get_clean();
+        wp_send_json_error('No more posts');
+    }
+}
+add_action('wp_ajax_nopriv_load_more_posts', 'load_more_posts');
+add_action('wp_ajax_load_more_posts', 'load_more_posts');
+
+
+
+add_action('admin_head', function() {
+    echo '<style>
+span.update-plugins {
+    display: none !important;
+}
+   .update-message.notice.inline.notice-warning.notice-alt {
+    display: none;
+}
+
+.notice.wcs-nux__notice {
+    display: none;
+}
+    </style>';
+});
+
+
+
+
+
+
+
+
+
+
+// custom login 
+function custom_login_logo() {
+	echo '<style type="text/css">
+	#login {
+		max-width: 490px;
+		padding: 0% 0 0;
+		margin: auto;
+		width: 100%;
+	}
+	.login #nav {
+		margin: 24px 0 0;
+		text-align: center;
+	}
+
+	p#backtoblog {
+		text-align: center;
+	}
+	
+
+	.login form .input, .login input[type=password], .login input[type=text] {
+		font-size: 24px;
+		line-height: 1.33333333;
+		width: 100%;
+		border-width: 0.0625rem;
+		padding: 10px;
+		margin: 0 6px 16px 0;
+		min-height: 50px;
+		max-height: none;
+		border-radius: 0px;
+	}
+
+	body.login.js.login-action-login.wp-core-ui.locale-en-us {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 15px;
+		background-image: url(/wp-content/uploads/2023/04/header-supply.svg);
+		background-size: cover;
+		background-position: center;
+		background-repeat: no-repeat;
+	}
+
+    div#login_error {
+    display: none !important;
+}
+
+	@media only screen and (max-width: 1729px) {
+		body.login.js.login-action-login.wp-core-ui.locale-en-us {
+			background-size: contain;
+		}
+	  }
+
+	body {
+		background: #F6F5F3;
+		min-width: 0;
+		color: #3c434a;
+		font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
+		font-size: 13px;
+		line-height: 1.4;
+	}
+
+	.wp-core-ui .button-primary {
+		background: white;
+		border-color: #2271b1;
+		color: #000;
+		text-decoration: none;
+		text-shadow: none;
+		border-radius: 0px;
+		padding: 8px 50px !important;
+		text-transform: uppercase;
+		font-weight: 600;
+		border: 1px solid;
+	}
+
+	.wp-core-ui .button-primary.focus, .wp-core-ui .button-primary.hover, .wp-core-ui .button-primary:focus, .wp-core-ui .button-primary:hover {
+		background: #000000;
+		border-color: #ffffff;
+		color: #fff;
+	}
+
+	.login h1 a {
+		background-image: url(/wp-content/uploads/2023/03/piped-peony-logo.png) !important;
+		background-size: 100%;
+		width: 100%;
+		background-position: center top;
+		background-repeat: no-repeat;
+		/* color: #3c434a; */
+		height: 124px;
+		width: 100% !IMPORTANT;
+		font-size: 20px;
+		font-weight: 400;
+		line-height: 1.3;
+		margin: 0 auto 25px;
+		padding: 0;
+		text-decoration: none;
+		width: 84px;
+		text-indent: -9999px;
+		outline: 0;
+		overflow: hidden;
+		display: block;
+		/* background-color: black; */
+	}
+	</style>';
+ }
+ add_action('login_head', 'custom_login_logo');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// create a post type for products 
+function create_product_post_type() {
+    $labels = array(
+        'name' => 'Products',
+        'singular_name' => 'Product',
+        'menu_name' => 'Products',
+        'name_admin_bar' => 'Product',
+        'add_new' => 'Add New',
+        'add_new_item' => 'Add New Product',
+        'new_item' => 'New Product',
+        'edit_item' => 'Edit Product',
+        'view_item' => 'View Product',
+        'all_items' => 'All Products',
+        'search_items' => 'Search Products',
+        'parent_item_colon' => 'Parent Products:',
+        'not_found' => 'No products found.',
+        'not_found_in_trash' => 'No products found in Trash.',
+    );
+
+    $args = array(
+        'labels' => $labels,
+        'public' => true,
+        'publicly_queryable' => true,
+        'show_ui' => true,
+        'show_in_menu' => true,
+        'query_var' => true,
+        'rewrite' => array('slug' => 'product'),
+        'capability_type' => 'post',
+        'has_archive' => true,
+        'hierarchical' => false,
+        'menu_position' => null,
+        'supports' => array('title', 'editor', 'thumbnail'),
+    );
+
+    register_post_type('product', $args);
+}
+add_action('init', 'create_product_post_type');
+
+/// product meta boxes
+function add_product_meta_boxes() {
+    add_meta_box(
+        'product_details',
+        'Product Details',
+        'render_product_meta_box',
+        'product',
+        'normal',
+        'high'
+    );
+}
+add_action('add_meta_boxes', 'add_product_meta_boxes');
+
+
+
+// Remove the old product price meta box
+function remove_old_price_meta_box() {
+    remove_meta_box('product_details', 'product', 'normal');
+}
+add_action('do_meta_boxes', 'remove_old_price_meta_box');
+
+
+
+// Update save_product_meta to use ACF fields
+function save_product_meta($post_id) {
+    // Add detailed debug logging
+    error_log('Starting save_product_meta for post ID: ' . $post_id);
+    // error_log('Current Stripe Key: ' . STRIPE_SECRET_KEY); // Sensitive - REMOVED
+    // error_log('Is Test Key: ' . (strpos(STRIPE_SECRET_KEY, 'sk_test_') === 0 ? 'Yes' : 'No')); // Sensitive - REMOVED
+    // error_log('Current Host: ' . $_SERVER['HTTP_HOST']); // Potentially sensitive - COMMENTED OUT
+
+    // Check if this is an auto-draft or an autosave
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+        error_log('Skipping - this is an autosave');
+        return;
+    }
+    // Use wp_is_post_revision to avoid saving revisions
+    if (wp_is_post_revision($post_id)) {
+         error_log('Skipping - this is a revision');
+         return;
+    }
+    if (get_post_status($post_id) === 'auto-draft') {
+        error_log('Skipping - this is an auto-draft');
+        return;
+    }
+
+    // Ensure ACF functions are available (important when running via hooks)
+    if (!function_exists('get_field')) {
+        error_log('ACF function get_field does not exist. Skipping save_product_meta.');
+        return;
+    }
+
+    // Check if this post should be synced with Stripe based on the ACF field
+    $sync_flag = get_field('sync_with_stripe', $post_id); // Use your actual ACF field name
+    if ($sync_flag !== true) { 
+        error_log('Skipping - Sync with Stripe flag not set to true for post ID: ' . $post_id);
+        return; 
+    }
+
+    // Include the Stripe PHP library
+    require 'vendor/autoload.php';
+    
+    // Double check we're using the right key based on environment
+    $is_local = strpos($_SERVER['HTTP_HOST'], 'localhost') !== false 
+             || strpos($_SERVER['HTTP_HOST'], '.local') !== false
+             || strpos($_SERVER['HTTP_HOST'], 'local.') !== false;
+             
+    // if ($is_local && strpos(STRIPE_SECRET_KEY, 'sk_live_') === 0) { // STRIPE_SECRET_KEY check
+    //     error_log('ERROR: Attempting to use live key in local environment!');
+    //     return; // Prevent creating live products in local environment
+    // }
+
+    error_log('Setting Stripe API Key...');
+    \Stripe\Stripe::setApiKey(STRIPE_SECRET_KEY);
+
+    // Retrieve ACF field values
+    $product_type = get_field('product_type', $post_id);
+    $subscription_price = get_field('subscription_price', $post_id);
+    $product_price = get_field('product_price', $post_id);
+    $variations = get_field('variation_product', $post_id);
+    $subscription_length = get_field('subscription_length', $post_id);
+
+    // Get featured image URL
+    $featured_image_url = get_the_post_thumbnail_url($post_id, 'full');
+
+    // Map subscription length to Stripe intervals
+    $interval_map = [
+        'monthly' => 'month',
+        '3months' => 'month', // Stripe doesn't support every 3 months directly
+        'yearly' => 'year',
+    ];
+
+    // Determine the interval and interval count
+    $interval = $interval_map[$subscription_length] ?? 'month';
+    $interval_count = ($subscription_length === '3months') ? 3 : 1;
+
+    try {
+        if ($product_type === 'variation' && $variations) {
+            $main_post_title = get_the_title($post_id); // Get the main post title once before the loop
+
+            foreach ($variations as $index => $variation) {
+                $variation_name = $variation['product_variation'];
+                $variation_price = $variation['variable_product_price'];
+                $variation_description = $variation['variable_product_description'];
+
+                // Construct the desired product name for Stripe
+                $stripe_product_name = $main_post_title . ' (' . $variation_name . ')';
+
+                // Retrieve the Stripe product ID for this variation
+                $stripe_variation_product_id = get_post_meta($post_id, 'stripe_variation_product_id_' . $index, true);
+
+                // Prepare data, using the combined name and conditionally adding description & image
+                $variation_stripe_data = [
+                    'name' => $stripe_product_name, // Use the combined name
+                ];
+                if (!empty($variation_description)) {
+                    $variation_stripe_data['description'] = $variation_description;
+                }
+                if ($featured_image_url) {
+                    $variation_stripe_data['images'] = [$featured_image_url]; // Add image URL as an array
+                }
+
+                if ($stripe_variation_product_id) {
+                    // Update existing product on Stripe
+                    $variation_product = \Stripe\Product::update($stripe_variation_product_id, $variation_stripe_data);
+
+                    // Retrieve existing prices and archive them
+                    $prices = \Stripe\Price::all(['product' => $stripe_variation_product_id, 'active' => true]);
+                    foreach ($prices->data as $price) {
+                        \Stripe\Price::update($price->id, ['active' => false]);
+                    }
+                } else {
+                    // Create a new product for each variation
+                    $variation_product = \Stripe\Product::create($variation_stripe_data);
+
+                    // Save the Stripe product ID for this variation
+                    update_post_meta($post_id, 'stripe_variation_product_id_' . $index, $variation_product->id);
+                    error_log('Saved Stripe Variation Product ID: ' . $variation_product->id);
+                }
+
+                // Create a new price for each variation
+                $price = \Stripe\Price::create([
+                    'product' => $variation_product->id,
+                    'unit_amount' => $variation_price * 100, // Convert to cents
+                    'currency' => 'usd',
+                ]);
+
+                // Save the Stripe price ID for this variation
+                update_post_meta($post_id, 'stripe_variation_price_id_' . $index, $price->id);
+                update_post_meta($post_id, 'stripe_variation_price_amount_' . $index, $variation_price);
+                error_log('Saved Stripe Variation Price ID: ' . $price->id);
+            }
+        } else {
+            // Handle other product types (subscription, single)
+            $stripe_product_id = get_post_meta($post_id, 'stripe_product_id', true);
+
+            // Prepare data, adding image if available
+            $product_data = [
+                'name' => get_the_title($post_id),
+            ];
+            if ($featured_image_url) {
+                 $product_data['images'] = [$featured_image_url]; // Add image URL as an array
+            }
+
+            if ($stripe_product_id) {
+                // Update existing product on Stripe
+                $product = \Stripe\Product::update($stripe_product_id, $product_data);
+
+                // Retrieve existing prices and archive them
+                $prices = \Stripe\Price::all(['product' => $stripe_product_id, 'active' => true]);
+                foreach ($prices->data as $price) {
+                    \Stripe\Price::update($price->id, ['active' => false]);
+                }
+            } else {
+                // Create a new product on Stripe
+                $product = \Stripe\Product::create($product_data);
+
+                // Save Stripe product ID to post meta
+                update_post_meta($post_id, 'stripe_product_id', $product->id);
+                error_log('Saved Stripe Product ID: ' . $product->id);
+            }
+
+            // Handle pricing for subscription or single products
+            if ($product_type === 'subscription') {
+                $price = \Stripe\Price::create([
+                    'product' => $product->id,
+                    'unit_amount' => $subscription_price * 100, // Convert to cents
+                    'currency' => 'usd',
+                    'recurring' => [
+                        'interval' => $interval,
+                        'interval_count' => $interval_count,
+                    ],
+                ]);
+            } elseif ($product_type === 'single') {
+                $price = \Stripe\Price::create([
+                    'product' => $product->id,
+                    'unit_amount' => $product_price * 100, // Convert to cents
+                    'currency' => 'usd',
+                ]);
+            }
+
+            // Save the Stripe price ID and amount
+            update_post_meta($post_id, 'stripe_price_id', $price->id);
+            update_post_meta($post_id, 'stripe_price_amount', $product_type === 'subscription' ? $subscription_price : $product_price);
+            error_log('Saved Stripe Price ID: ' . $price->id);
+        }
+    } catch (Exception $e) {
+        // Handle error
+        error_log('Stripe Error in save_product_meta: A problem occurred while syncing with Stripe.'); // Log less specific message
+    }
+}
+
+add_action('save_post', 'save_product_meta');
+
+
+
+//// update product status 
+function update_stripe_product_status($new_status, $old_status, $post) {
+    if ($post->post_type !== 'product') {
+        return;
+    }
+
+    // Include the Stripe PHP library
+    require 'vendor/autoload.php';
+    \Stripe\Stripe::setApiKey(STRIPE_SECRET_KEY); // Use constant from wp-config.php
+
+    try {
+        // Handle main product
+        $stripe_product_id = get_post_meta($post->ID, 'stripe_product_id', true);
+        if ($stripe_product_id) {
+            if ($new_status === 'trash' || $new_status === 'draft') {
+                \Stripe\Product::update($stripe_product_id, ['active' => false]);
+            } elseif ($old_status === 'trash' || $old_status === 'draft') {
+                \Stripe\Product::update($stripe_product_id, ['active' => true]);
+            }
+        }
+
+        // Handle variation products
+        $variations = get_field('variation_product', $post->ID);
+        if ($variations) {
+            foreach ($variations as $index => $variation) {
+                $stripe_variation_product_id = get_post_meta($post->ID, 'stripe_variation_product_id_' . $index, true);
+                if ($stripe_variation_product_id) {
+                    if ($new_status === 'trash' || $new_status === 'draft') {
+                        \Stripe\Product::update($stripe_variation_product_id, ['active' => false]);
+                    } elseif ($old_status === 'trash' || $old_status === 'draft') {
+                        \Stripe\Product::update($stripe_variation_product_id, ['active' => true]);
+                    }
+                }
+            }
+        }
+    } catch (Exception $e) {
+        // Handle error
+        error_log('Stripe error in update_stripe_product_status: A problem occurred.'); // Log less specific message
+    }
+}
+
+add_action('transition_post_status', 'update_stripe_product_status', 10, 3);
+
+
+function delete_stripe_product_on_permanent_delete($post_id) {
+    $post = get_post($post_id);
+
+    if ($post->post_type !== 'product') {
+        return;
+    }
+
+    // Include the Stripe PHP library
+    require 'vendor/autoload.php';
+    \Stripe\Stripe::setApiKey(STRIPE_SECRET_KEY); // Use constant from wp-config.php
+
+    try {
+        // Handle main product
+        $stripe_product_id = get_post_meta($post_id, 'stripe_product_id', true);
+        if ($stripe_product_id) {
+            // Retrieve and deactivate all prices associated with the product
+            $prices = \Stripe\Price::all(['product' => $stripe_product_id]);
+            foreach ($prices->data as $price) {
+                \Stripe\Price::update($price->id, ['active' => false]);
+            }
+
+            // Now delete the product
+            $product = \Stripe\Product::retrieve($stripe_product_id);
+            $product->delete();
+        }
+
+        // Handle variation products
+        $variations = get_field('variation_product', $post_id);
+        if ($variations) {
+            foreach ($variations as $index => $variation) {
+                $stripe_variation_product_id = get_post_meta($post_id, 'stripe_variation_product_id_' . $index, true);
+                if ($stripe_variation_product_id) {
+                    // Retrieve and deactivate all prices associated with the variation product
+                    $prices = \Stripe\Price::all(['product' => $stripe_variation_product_id]);
+                    foreach ($prices->data as $price) {
+                        \Stripe\Price::update($price->id, ['active' => false]);
+                    }
+
+                    // Now delete the variation product
+                    $variation_product = \Stripe\Product::retrieve($stripe_variation_product_id);
+                    $variation_product->delete();
+                }
+            }
+        }
+    } catch (Exception $e) {
+        // Handle error
+        error_log('Stripe error in delete_stripe_product_on_permanent_delete: A problem occurred.'); // Log less specific message
+    }
+}
+
+add_action('before_delete_post', 'delete_stripe_product_on_permanent_delete');
+
+
+// Prevent auto-draft creation for the 'product' post type
+function prevent_auto_draft_for_product($data, $postarr) {
+    if ($data['post_type'] === 'product' && $data['post_status'] === 'auto-draft') {
+        // Check if this is a new product creation
+        if (empty($postarr['ID'])) {
+            // Allow the auto-draft to be created for new products
+            return $data;
+        }
+        // Otherwise, prevent the auto-draft
+        return [];
+    }
+    return $data;
+}
+
+add_filter('wp_insert_post_data', 'prevent_auto_draft_for_product', 10, 2);
+
+
+///chcekout page stripe connection
+add_action('wp_ajax_create_payment_intent', 'handle_create_payment_intent');
+add_action('wp_ajax_nopriv_create_payment_intent', 'handle_create_payment_intent');
+
+function handle_create_payment_intent() {
+    try {
+        if (!check_ajax_referer('stripe_payment_nonce', 'security', false)) {
+            wp_send_json_error(['error' => 'Invalid security token'], 403);
+            return;
+        }
+
+        \Stripe\Stripe::setApiKey(STRIPE_SECRET_KEY);
+
+        $email = sanitize_email($_POST['email']);
+        $username = sanitize_user($_POST['username']);
+        $password = $_POST['password'];
+
+        if (empty($email) || empty($username) || empty($password)) {
+            throw new Exception('Email, username, and password are required');
+        }
+
+        // Create or get customer
+        $customers = \Stripe\Customer::search([
+            'query' => "email:'$email'",
+            'limit' => 1
+        ]);
+        
+        if (empty($customers->data)) {
+            $customer = \Stripe\Customer::create([
+                'email' => $email
+            ]);
+        } else {
+            $customer = $customers->data[0];
+        }
+
+        // Get cart data
+        $cart = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
+        $has_trial = false;
+        
+        // Check if any product has a trial
+        foreach ($cart as $item) {
+            $trial_days = get_field('subscription_free_trial_days', $item['product_id']);
+            if ($trial_days > 0) {
+                $has_trial = true;
+                break;
+            }
+        }
+
+        if ($has_trial) {
+            // Create SetupIntent for trial subscriptions
+            $intent = \Stripe\SetupIntent::create([
+                'customer' => $customer->id,
+                'payment_method_types' => ['card'],
+                'usage' => 'off_session',
+            ]);
+
+            wp_send_json_success([
+                'clientSecret' => $intent->client_secret,
+                'isSetupIntent' => true
+            ]);
+        } else {
+            // Create PaymentIntent for regular payments
+            $intent = \Stripe\PaymentIntent::create([
+                'amount' => intval($_POST['amount']),
+                'currency' => 'usd',
+                'customer' => $customer->id,
+                'automatic_payment_methods' => [
+                    'enabled' => true,
+                ],
+            ]);
+
+            // Create WordPress user
+            $user_id = wp_create_user($username, $password, $email);
+            if (is_wp_error($user_id)) {
+                throw new Exception('User creation failed: ' . $user_id->get_error_message());
+            }
+            wp_update_user(['ID' => $user_id, 'role' => 'subscriber']);
+
+            wp_send_json_success([
+                'clientSecret' => $intent->client_secret,
+                'isSetupIntent' => false
+            ]);
+        }
+
+    } catch (Exception $e) {
+        // error_log('Stripe Error: ' . $e->getMessage()); // Log less specific message if needed
+        error_log('Stripe Error in handle_create_payment_intent: A problem occurred.');
+        wp_send_json_error(['error' => $e->getMessage()]);
+    }
+}
+
+// Sanitize and validate inputs
+
+function debug_acf_fields($post_id) {
+    $product_type = get_field('product_type', $post_id);
+    $trial_days = get_field('subscription_free_trial_days', $post_id);
+    $subscription_price = get_field('subscription_price', $post_id);
+    
+    // error_log('DEBUG ACF Fields for post ' . $post_id);
+    // error_log('Product Type: ' . $product_type);
+    // error_log('Free Trial Days: ' . $trial_days);
+    // error_log('Subscription Price: ' . $subscription_price);
+    // error_log('All Fields: ' . print_r(get_fields($post_id), true));
+}
+
+// Add this function to handle the AJAX request
+function create_checkout_session() {
+    // Verify nonce
+    if (!isset($_POST['security']) || !wp_verify_nonce($_POST['security'], 'checkout_nonce')) {
+        wp_send_json_error(array('error' => 'Invalid security token'));
+        exit;
+    }
+
+    // Verify CSRF token
+    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        wp_send_json_error(array('error' => 'Invalid CSRF token'));
+        exit;
+    }
+
+    try {
+        // Initialize Stripe
+        require_once 'vendor/autoload.php';
+        \Stripe\Stripe::setApiKey(STRIPE_SECRET_KEY);
+
+        // Use cart data sent from JavaScript, not directly from session
+        $cart_json = isset($_POST['cart_data']) ? wp_unslash($_POST['cart_data']) : '[]';
+        $cart = json_decode($cart_json, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($cart)) {
+            // error_log('[Checkout Session] Invalid cart data received: ' . $cart_json); // Potentially logs cart data
+            error_log('[Checkout Session] Invalid cart data received.');
+            throw new Exception('Invalid cart data received.');
+        }
+        // error_log('[Checkout Session] Decoded cart data: ' . print_r($cart, true)); // Potentially logs cart data
+        error_log('[Checkout Session] Processing cart data.');
+
+        $line_items = array();
+        $mode = 'payment'; // Default mode
+        $trial_period_days = 0;
+        $has_trial = false;
+        $needs_shipping = false;
+        $subscription_product_present = false;
+        $item_count = count($cart);
+
+        if ($item_count > 0) {
+            foreach ($cart as $item_key => $item) {
+                if (!isset($item['product_id']) || !isset($item['stripe_price_id']) || !isset($item['quantity'])) {
+                    // error_log('[Checkout Session] Skipping cart item due to missing essential data: ' . print_r($item, true)); // Potentially logs cart item data
+                    continue; // Skip malformed items
+                }
+
+                $product_id = $item['product_id'];
+                $product_type = get_field('product_type', $product_id);
+
+                if ($product_type === 'subscription') {
+                    $subscription_product_present = true;
+                    if ($item_count > 1) {
+                        throw new Exception('Subscriptions must be purchased alone. Please ensure only the subscription is in your cart.');
+                    }
+                    if ($item['quantity'] != 1) {
+                        throw new Exception('Subscription quantity must be 1.');
+                    }
+                    // If we are here, it's a valid single subscription item
+                    $line_items[] = [
+                        'price' => $item['stripe_price_id'],
+                        'quantity' => 1,
+                    ];
+                    $mode = 'subscription';
+                    $current_trial_days = intval(get_field('subscription_free_trial_days', $product_id));
+                    if ($current_trial_days > 0) {
+                        $has_trial = true;
+                        $trial_period_days = $current_trial_days; // Assuming only one subscription, so this is fine
+                    }
+                    $needs_shipping = false; // Subscriptions typically don't require shipping
+                    break; // Since it must be the only item, we can break after processing it
+                } else {
+                    // This is a non-subscription item
+                    $line_items[] = [
+                        'price' => $item['stripe_price_id'],
+                        'quantity' => $item['quantity'],
+                    ];
+                    if ($product_type === 'single' || $product_type === 'variation') {
+                        $needs_shipping = true;
+                    }
+                }
+            }
+        }
+        
+        // After the loop, if a subscription was present, $line_items should contain only that one subscription.
+        // If no subscription was present, $line_items contains all non-subscription items.
+
+        if (empty($line_items)) {
+            // This can happen if cart was empty, or if a subscription was present with other items (and loop was broken early after error)
+            // or if items were malformed.
+            throw new Exception('Cannot create checkout session with empty or invalid cart. Please check your cart contents.');
+        }
+
+        // If a subscription product was present, but $line_items ended up with more than one item (should not happen with current logic but as a safeguard)
+        if ($subscription_product_present && count($line_items) > 1) {
+             // error_log('[Checkout Session] Logic error: Subscription present but line_items has multiple entries. Cart: ' . print_r($cart, true)); // Potentially logs cart data
+             error_log('[Checkout Session] Logic error: Subscription present but line_items has multiple entries.');
+             throw new Exception('Error processing subscription. Please try again.');
+        }
+
+        // --- MODIFIED SECTION FOR USER HANDLING ---
+        $email = '';
+        $username = '';
+        $password = '';
+        $token = null; // Initialize token
+
+        $session_params = [
+            'payment_method_types' => ['card'],
+            'line_items' => $line_items,
+            'mode' => $mode,
+            'success_url' => home_url('/checkout-success?session_id={CHECKOUT_SESSION_ID}'),
+            'cancel_url' => home_url('/checkout-cancel'),
+            'billing_address_collection' => 'required',
+            'metadata' => [], // Initialize metadata as an array
+        ];
+
+        if (is_user_logged_in()) {
+            $current_user_obj = wp_get_current_user();
+            if ($current_user_obj && $current_user_obj->ID != 0) {
+                $email = $current_user_obj->user_email;
+                // No new user creation, no registration token needed for existing users
+                error_log('[Checkout Session] Logged-in user detected: ' . $email);
+            } else {
+                // Fallback if user object is not available despite being logged in (should be rare)
+                $email = isset($_POST['email']) ? sanitize_email(wp_unslash($_POST['email'])) : '';
+                if (empty($email)) {
+                    throw new Exception('User is logged in but email could not be determined.');
+                }
+                error_log('[Checkout Session] Logged-in user, email from POST: ' . $email);
+            }
+        } else {
+            // Not logged in: Proceed with new user registration logic
+            $email = isset($_POST['email']) ? sanitize_email(wp_unslash($_POST['email'])) : '';
+            $username = isset($_POST['username']) ? sanitize_user(wp_unslash($_POST['username']), true) : '';
+            $password = isset($_POST['password']) ? $_POST['password'] : ''; // Password is not sanitized here; wp_create_user handles hashing
+
+            if (empty($email) || !is_email($email) || empty($username) || empty($password)) {
+                throw new Exception('Email, username, and password are required for new account creation.');
+            }
+
+            // Secure registration: generate a token and store registration data server-side
+            $token = uniqid('reg_', true);
+            $registration_data = [
+                'username' => $username,
+                'email'    => $email,
+                'password' => $password, 
+            ];
+            store_pending_registration($token, $registration_data);
+
+            if (session_status() === PHP_SESSION_NONE) { session_start(); }
+            $_SESSION['latest_registration_token'] = $token;
+            $session_params['metadata']['registration_token'] = $token; // Add token to Stripe metadata
+            error_log('[Checkout Session] New user registration. Token: ' . $token . ' Email: ' . $email);
+        }
+        // --- END OF MODIFIED SECTION ---
+
+        $session_params['customer_email'] = $email; // Set customer email for Stripe
+
+        // Add shipping address collection if needed
+        if ($needs_shipping) {
+            $session_params['shipping_address_collection'] = [
+                'allowed_countries' => ['US'], // <-- ADJUST THIS LIST with countries you ship to (e.g., 'CA', 'GB')
+            ];
+        }
+
+        // Only add subscription_data if mode is subscription
+        if ($mode === 'subscription') {
+            $session_params['subscription_data'] = [];
+            // Only add trial_period_days if there is a trial
+            if ($has_trial) {
+                 $session_params['subscription_data']['trial_period_days'] = $trial_period_days;
+            }
+        }
+
+        // Add payment_intent_data description for payment mode
+        if ($mode === 'payment') {
+            $product_names = array_map(function($item) { 
+                // Ensure name exists, provide fallback
+                return isset($item['name']) ? $item['name'] : 'Unknown Product'; 
+            }, $cart); // Use the original cart data for names, not just line_items which might be just price_id
+            
+            $description = implode(', ', array_slice($product_names, 0, 3)); 
+            if (count($product_names) > 3) {
+                $description .= '...';
+            }
+            // Ensure description isn't too long (Stripe limits apply, often around 22 chars for statement descriptors, more for description)
+            if (strlen($description) > 150) { // Generous limit for description field
+                $description = substr($description, 0, 147) . '...';
+            }
+            
+            $session_params['payment_intent_data'] = [
+                'description' => $description ?: 'Website Order', // Ensure fallback
+            ];
+             error_log('[Checkout Session] Setting Payment Intent Description: ' . ($description ?: 'Website Order'));
+        }
+
+        // Add metadata for subscription check on success page
+        if ($subscription_product_present) { // This variable indicates if a subscription item was in the cart
+             $session_params['metadata']['contains_subscription'] = 'true';
+             error_log('[Checkout Session] Added metadata: contains_subscription = true');
+        } else {
+             $session_params['metadata']['contains_subscription'] = 'false'; // Explicitly set to false if not a subscription
+             error_log('[Checkout Session] Added metadata: contains_subscription = false (subscription_product_present is false)');
+        }
+
+        $checkout_session = \Stripe\Checkout\Session::create($session_params);
+
+        wp_send_json_success(array(
+            'url' => $checkout_session->url,
+            'redirect_after_signup' => home_url('/email-verification/') // This might need to be conditional if user is already logged in
+        ));
+
+    } catch (Exception $e) {
+        // error_log('Stripe Error: ' . $e->getMessage()); // Log less specific message if needed
+        error_log('Stripe Error in create_checkout_session: A problem occurred.');
+        wp_send_json_error(array('error' => $e->getMessage()));
+    }
+    exit;
+}
+
+add_action('wp_ajax_create_checkout_session', 'create_checkout_session');
+add_action('wp_ajax_nopriv_create_checkout_session', 'create_checkout_session');
+
+function handle_stripe_webhook() {
+    // Set Stripe API key at the very top
+    if (defined('STRIPE_SECRET_KEY')) {
+        \Stripe\Stripe::setApiKey(STRIPE_SECRET_KEY);
+       // error_log('Webhook Stripe Key: ' . STRIPE_SECRET_KEY); // Sensitive - REMOVED
+    } else {
+       // error_log('Webhook Stripe Key: NOT DEFINED');
+    }
+   // error_log('Stripe webhook received');
+    
+    $payload = @file_get_contents('php://input');
+    $event = null;
+    
+    try {
+        $event = \Stripe\Event::constructFrom(
+            json_decode($payload, true)
+        );
+      //  error_log('Event type: ' . $event->type);
+        
+        if ($event->type === 'checkout.session.completed') {
+            $session = $event->data->object;
+        //    error_log('Processing checkout session: ' . $session->id);
+            
+            // Get registration token from metadata
+            $token = isset($session->metadata->registration_token) ? $session->metadata->registration_token : '';
+            $registration_data = $token ? get_pending_registration($token) : null;
+            
+            $email_from_session = $session->customer_email; // Email used in Stripe Checkout
+            $user = null;
+
+            if ($email_from_session) {
+                $user = get_user_by('email', $email_from_session);
+            }
+
+            if (!$user && $registration_data) { // New user registration flow
+             //   error_log('No existing user found for email ' . $email_from_session . '. Attempting new user registration from token: ' . $token);
+                $username = $registration_data['username'];
+                $email = $registration_data['email']; // This should match $email_from_session
+                $password = $registration_data['password'];
+
+                // Create the user now, after payment
+                $user_id = wp_create_user($username, $password, $email);
+                if (is_wp_error($user_id)) {
+                 //   error_log('User creation failed in webhook: ' . $user_id->get_error_message());
+                    // Decide how to handle: maybe try to find user by email again, or fail.
+                    // For now, if creation fails, we might not have a user object.
+                } else {
+                    $user = get_user_by('id', $user_id);
+                    if ($user) {
+                        update_user_meta($user_id, 'email_verified', '0'); // Start as unverified, next step will send email
+                        update_user_meta($user_id, 'registration_date', time());
+                        // Auto-login the new user
+                        wp_set_current_user($user_id, $username);
+                        wp_set_auth_cookie($user_id);
+                     //   error_log('User ' . $user_id . ' (' . $email . ') created and auto-logged in via webhook.');
+                        // Send invoice for new user
+                        send_invoice_email($user_id, ['stripe_checkout_session_id' => $session->id]);
+                        // Trigger email verification for the new user
+                        custom_user_registered($user_id); // Sends verification email, sets role to subscriber
+                    }
+                }
+            } elseif ($user) { // Existing user found
+             //   error_log('Existing user found for email ' . $email_from_session . '. User ID: ' . $user->ID);
+                // If it's a subscription purchase, update their role and ensure email is verified
+                if (isset($session->mode) && $session->mode === 'subscription' && isset($session->metadata->contains_subscription) && $session->metadata->contains_subscription === 'true') {
+                 //   error_log('Subscription purchase confirmed for existing user ID: ' . $user->ID . '. Updating role to subscriber and verifying email.');
+                    $user->set_role('subscriber');
+                    update_user_meta($user->ID, 'email_verified', '1'); // Mark email as verified
+                    update_user_meta($user->ID, 'registration_date', time()); // Update registration_date to reflect new activity
+
+                    // Send invoice for existing user reactivating/purchasing new subscription
+                    send_invoice_email($user->ID, ['stripe_checkout_session_id' => $session->id]);
+                } else {
+                    // For non-subscription purchases by existing users, ensure they are at least a subscriber if they somehow lost the role
+                    // And their email is verified.
+                    if (!$user->has_cap('administrator')) { // Don't demote admins
+                        if (!in_array('subscriber', $user->roles)) {
+                            $user->set_role('subscriber');
+                        //    error_log('Existing user ID: ' . $user->ID . ' role updated to subscriber for non-subscription purchase.');
+                        }
+                        update_user_meta($user->ID, 'email_verified', '1');
+                    }
+                    // Send invoice for existing user for non-subscription
+                    send_invoice_email($user->ID, ['stripe_checkout_session_id' => $session->id]);
+                }
+            } else {
+             //   error_log('Webhook: Checkout session completed but no user found for email ' . $email_from_session . ' and no valid registration token/data.');
+                // Potentially handle cases where customer_email might exist in Stripe but not WP, and no registration was pending.
+                // This could be an edge case or an error in flow.
+            }
+
+            // The following block for custom_user_registered seems redundant if handled above for new users,
+            // and existing users are handled by direct role set.
+            // Let's remove it or ensure it's only for truly new users if not handled by the $registration_data block.
+            /*
+            if ($user && get_user_meta($user->ID, 'email_verified', true) === '0') { // Check our new meta
+                error_log('Triggering email verification for user ID: ' . $user->ID);
+                custom_user_registered($user->ID); // This sends verification email and sets role to pending
+            } else if ($user) {
+                error_log('User already marked as verified or meta missing for: ' . $email . ' User ID: ' . $user->ID);
+            } else {
+                error_log('User not found in webhook for email: ' . $email);
+            }
+            */
+        }
+        // Handle subscription cancellation or status change
+        if (
+            $event->type === 'customer.subscription.deleted' ||
+            ($event->type === 'customer.subscription.updated' && isset($event->data->object->status) && in_array($event->data->object->status, ['canceled', 'unpaid', 'incomplete_expired']))
+        ) {
+            $subscription = $event->data->object;
+            $customer_id = $subscription->customer;
+            // Retrieve the Stripe customer to get the email
+            $customer = \Stripe\Customer::retrieve($customer_id);
+            $customer_email = $customer->email;
+          //  error_log('Subscription canceled for customer: ' . $customer_email);
+            if ($customer_email) {
+                $user = get_user_by('email', $customer_email);
+                if ($user) {
+                    // Ensure the role exists
+                    if (!get_role('subscriber_inactive')) {
+                        add_role('subscriber_inactive', 'Inactive Subscriber', array('read' => true));
+                    }
+                    // Set user role to subscriber_inactive
+                    $user->set_role('subscriber_inactive');
+                 //   error_log('User ' . $user->ID . ' set to subscriber_inactive');
+                } else {
+                 //   error_log('No WordPress user found for email: ' . $customer_email);
+                }
+            }
+        }
+        
+        http_response_code(200);
+        exit();
+        
+    } catch(\UnexpectedValueException $e) {
+      //  error_log('Webhook error: ' . $e->getMessage());
+      error_log('Webhook error: Unexpected value.');
+        http_response_code(400);
+        exit();
+    } catch(\Stripe\Exception\SignatureVerificationException $e) {
+       // error_log('Webhook signature verification failed: ' . $e->getMessage());
+       error_log('Webhook signature verification failed.');
+        http_response_code(400);
+        exit();
+    } catch (Exception $e) {
+       // error_log('Webhook error: ' . $e->getMessage());
+       error_log('Webhook error: General exception.');
+        http_response_code(400);
+        exit();
+    }
+}
+
+add_action('wp_ajax_nopriv_stripe_webhook', 'handle_stripe_webhook');
+add_action('wp_ajax_stripe_webhook', 'handle_stripe_webhook');
+
+// Register Stripe webhook endpoint
+add_action('rest_api_init', function () {
+    register_rest_route('stripe/v1', '/webhook', array(
+        'methods' => 'POST',
+        'callback' => 'handle_stripe_webhook',
+        'permission_callback' => '__return_true'
+    ));
+});
+
+
+// Email verification functionality
+function custom_user_registered($user_id) {
+    // Call this function after a new user is created (e.g., after wp_create_user)
+    $expiration_time = time() + 24 * 60 * 60; // 24 hours from now
+    $verification_token = wp_create_nonce('email_verification_' . $user_id . '_' . $expiration_time);
+    update_user_meta($user_id, 'email_verification_token', $verification_token);
+    update_user_meta($user_id, 'email_verification_expiration', $expiration_time);
+    update_user_meta($user_id, 'email_verified', '0');
+    
+    // Set user role to subscriber initially
+    $user = new WP_User($user_id);
+    $user->set_role('subscriber'); // Changed from 'pending'
+    error_log('User ID ' . $user_id . ' role set to subscriber initially in custom_user_registered.');
+    
+    // Send verification email
+    $verification_link = add_query_arg(array(
+        'action' => 'verify_email',
+        'token' => $verification_token,
+        'user_id' => $user_id
+    ), home_url());
+    
+    $to = $user->user_email;
+    $subject = 'The Piped Peony - Email Verification';
+    
+    // Create HTML message with styled button
+    $message = '
+    <html>
+    <head>
+        <style>
+            .verification-button {
+                display: inline-block;
+                padding: 12px 24px;
+                background-color: #000000;
+                color: #ffffff !important;
+                text-decoration: none;
+                border-radius: 4px;
+                margin: 20px 0;
+            }
+        </style>
+    </head>
+    <body>
+        <p>Hello,</p>
+        <p>Please click the button below to verify your email address. Note that this link will expire in 24 hours.</p>
+        <p><a href="' . esc_url($verification_link) . '" class="verification-button">Verify Email Address</a></p>
+        <p>If the button above doesn\'t work, you can copy and paste this link into your browser:</p>
+        <p>' . esc_url($verification_link) . '</p>
+        <p>Best regards,<br>The Piped Peony Team</p>
+    </body>
+    </html>';
+    
+    $headers = array(
+        'Content-Type: text/html; charset=UTF-8',
+        'From: The Piped Peony <noreply@thepipedpeony.com>'
+    );
+    
+    wp_mail($to, $subject, $message, $headers);
+}
+// Call custom_user_registered($user_id) after your custom registration logic
+
+// Handle email verification with expiration check
+function handle_email_verification() {
+    if (isset($_GET['action']) && $_GET['action'] === 'verify_email' && isset($_GET['token']) && isset($_GET['user_id'])) {
+        $user_id = intval($_GET['user_id']);
+        $token = sanitize_text_field($_GET['token']);
+        
+        $stored_token = get_user_meta($user_id, 'email_verification_token', true);
+        $expiration_time = get_user_meta($user_id, 'email_verification_expiration', true);
+        
+        if ($token === $stored_token && time() <= $expiration_time) {
+            // Verify the email
+            update_user_meta($user_id, 'email_verified', '1');
+            delete_user_meta($user_id, 'email_verification_token');
+            delete_user_meta($user_id, 'email_verification_expiration');
+            
+            // Update user role to subscriber
+            $user = new WP_User($user_id);
+            $user->set_role('subscriber');
+
+            // Send welcome email after verification
+            send_custom_new_account_email($user_id, $user->user_login, null, $user->user_email);
+
+            // Redirect to email verified page
+            wp_redirect(home_url('/email-verified'));
+            exit;
+        } else {
+            // Invalid or expired token
+            wp_redirect(add_query_arg('email_verification_failed', '1', home_url('/my-account')));
+            exit;
+        }
+    }
+}
+add_action('init', 'handle_email_verification', 10);
+
+// Prevent login for unverified users
+function prevent_unverified_login($user, $password) {
+    // Check if the authentication has already failed OR if $user is not a WP_User object
+    if (is_wp_error($user) || !($user instanceof WP_User)) {
+        return $user; // Pass through the existing error or invalid object
+    }
+
+    // Now we know $user is a valid WP_User object, check if verified
+    if (!get_user_meta($user->ID, 'email_verified', true)) {
+        // If not verified, return the specific verification error, maybe add a resend link
+        // Consider adding a link/button triggering the resend functionality if needed
+        return new WP_Error('email_not_verified', 'Please verify your email address before logging in.');
+    }
+
+    // User is verified, continue with the login process
+    return $user;
+}
+// add_filter('authenticate', 'prevent_unverified_login', 30, 2); // Temporarily disabled to allow login
+
+// Add resend verification email functionality with expiration
+function resend_verification_email($user_id) {
+    $expiration_time = time() + 24 * 60 * 60;
+    $verification_token = wp_create_nonce('email_verification_' . $user_id . '_' . $expiration_time);
+    update_user_meta($user_id, 'email_verification_token', $verification_token);
+    update_user_meta($user_id, 'email_verification_expiration', $expiration_time);
+    
+    $user = new WP_User($user_id);
+    $verification_link = add_query_arg(array(
+        'action' => 'verify_email',
+        'token' => $verification_token,
+        'user_id' => $user_id
+    ), home_url());
+    
+    $to = $user->user_email;
+    $subject = 'The Piped Peony - Email Verification';
+    $message = sprintf(
+        'Please click the following link to verify your email address. Note that the link will expire in 24 hours: %s',
+        $verification_link
+    );
+    $headers = array(
+        'Content-Type: text/html; charset=UTF-8',
+        'From: The Piped Peony <noreply@thepipedpeony.com>'
+    );
+    
+    wp_mail($to, $subject, $message, $headers);
+}
+
+// Add resend verification email endpoint
+function handle_resend_verification() {
+    if (isset($_POST['resend_verification']) && isset($_POST['user_id'])) {
+        $user_id = intval($_POST['user_id']);
+        resend_verification_email($user_id);
+        wp_redirect(add_query_arg('verification_resent', '1', home_url('/my-account')));
+        exit;
+    }
+}
+add_action('init', 'handle_resend_verification');
+
+// Add notice for unverified users (optional, for your custom login page)
+function add_verification_notice() {
+    if (is_user_logged_in()) {
+        $user_id = get_current_user_id();
+        $user = new WP_User($user_id);
+        // Check if the user is pending and not verified
+        if (in_array('pending', $user->roles) && !get_user_meta($user_id, 'email_verified', true)) {
+            ?>
+            <div class="woocommerce-message">
+                <p>Please verify your email address to access your account. 
+                <form method="post" style="display: inline;">
+                    <input type="hidden" name="user_id" value="<?php echo esc_attr($user_id); ?>">
+                    <button type="submit" name="resend_verification" class="button">Resend verification email</button>
+                </form>
+                </p>
+            </div>
+            <?php
+        }
+    }
+}
+// You can hook add_verification_notice() to your custom login/account page template if desired
+
+// Add the custom role if not present
+function add_custom_roles() {
+    add_role('pending', 'Pending', array('read' => true));
+}
+add_action('init', 'add_custom_roles');
+
+/// handle user access conrol
+
+function handle_user_access_control() {
+    // Temporarily commented out for debugging ACF notice - REMOVING COMMENTS
+    // /*
+    error_log('handle_user_access_control function called.');
+
+    if (is_user_logged_in()) {
+        $user_id = get_current_user_id();
+        $user = new WP_User($user_id);
+        $email_verified = get_user_meta($user_id, 'email_verified', true);
+
+        // Define pages to restrict
+        $restricted_pages = array(
+            '/all-series/',
+            '/video-library/',
+            '/recipes/',
+            '/supply-list/',
+            '/tip-guide/',
+            '/category/',
+            '/suppliers/',
+            '/courses/'
+        );
+
+        // Get current page URL
+        $current_url = $_SERVER['REQUEST_URI'];
+        error_log('Current URL: ' . $current_url);
+
+        // Redirect subscriber_inactive users to /my-account if accessing restricted pages
+        if (in_array('subscriber_inactive', $user->roles)) {
+            foreach ($restricted_pages as $page) {
+                if (strpos($current_url, $page) === 0) {
+                    error_log('Redirecting subscriber_inactive user to /my-account.');
+                    wp_redirect(home_url('/my-account/'));
+                    exit;
+                }
+            }
+        }
+        // Check if the user has both 'Pending' and 'Subscriber' roles and is unverified
+        if (in_array('pending', $user->roles) && in_array('subscriber', $user->roles) && $email_verified !== '1') {
+            foreach ($restricted_pages as $page) {
+                if (strpos($current_url, $page) === 0) {
+                    error_log('Redirecting to email verification page.');
+                    wp_redirect(home_url('/email-verification/'));
+                    exit;
+                }
+            }
+        } else {
+            // Allow access if the user is a 'Subscriber' or 'Administrator' only
+            if (!in_array('subscriber', $user->roles) && !in_array('administrator', $user->roles)) {
+                $redirect = false;
+                foreach ($restricted_pages as $page) {
+                    if (strpos($current_url, $page) === 0) {
+                        $redirect = true;
+                        break;
+                    }
+                }
+                if ($redirect) {
+                    error_log('Redirecting to academy-details page.');
+                    wp_redirect(home_url('/product/piped-peony-academy/'));
+                    exit;
+                }
+            }
+        }
+    } else {
+        // If not logged in and trying to access a restricted page, redirect to home page
+        $restricted_pages = array(
+            '/all-series/',
+            '/video-library/',
+            '/recipes/',
+            '/supply-list/',
+            '/tip-guide/',
+            '/category/',
+            '/courses/'
+        );
+
+        // Get current page URL
+        $current_url = $_SERVER['REQUEST_URI'];
+        error_log('Current URL (not logged in): ' . $current_url);
+
+        foreach ($restricted_pages as $page) {
+            if (strpos($current_url, $page) === 0) {
+                error_log('Redirecting non-logged-in user from ' . $current_url . ' to home page.');
+                wp_redirect(home_url('/academy-details/'));
+                exit;
+            }
+        }
+    }
+    // */
+}
+add_action('init', 'handle_user_access_control', 20); // Keep the action hooked
+
+
+
+function redirect_unverified_users_from_category() {
+    // Temporarily commented out for debugging ACF notice - REMOVING COMMENTS
+    // /*
+    if (is_user_logged_in()) {
+        $user_id = get_current_user_id();
+        $user = new WP_User($user_id);
+        $email_verified = get_user_meta($user_id, 'email_verified', true);
+
+        // Check if the user is unverified
+        if ($email_verified !== '1') {
+            $current_url = $_SERVER['REQUEST_URI'];
+
+            // Check if the current URL is under /category
+            if (strpos($current_url, '/category') === 0) {
+                // Redirect to the email verification page
+                wp_redirect(home_url('/email-verification/'));
+                exit;
+            }
+        }
+    }
+    // */
+}
+add_action('init', 'redirect_unverified_users_from_category', 20); // Keep the action hooked
+
+function resend_verification_shortcode() {
+    if (is_user_logged_in()) {
+        $user_id = get_current_user_id();
+
+        // Check if the form is submitted
+        if (isset($_POST['resend_verification'])) {
+            resend_verification_email($user_id);
+            echo '<div class="woocommerce-message">Verification email sent successfully!</div>';
+        }
+
+        // Display the form
+        ob_start();
+        ?>
+        <form method="post">
+            <input type="hidden" name="user_id" value="<?php echo esc_attr($user_id); ?>">
+            <button type="submit" name="resend_verification" class="button">Resend verification email</button>
+        </form>
+        <?php
+        return ob_get_clean();
+    }
+    return '<div class="woocommerce-message">Please log in to resend the verification email.</div>';
+}
+add_shortcode('resend_verification', 'resend_verification_shortcode');
+
+
+
+function send_custom_new_account_email($user_id, $username, $password, $email) {
+    $user = get_userdata($user_id);
+    $user_first_name = $user->first_name ? $user->first_name : $username;
+    $blogname = 'The Piped Peony';
+    $set_password_url = wp_lostpassword_url();
+    $additional_content = '';
+    $user_login = $username;
+    $password_generated = true;
+
+    // Buffer the template output
+    ob_start();
+    // Path to the custom template (in child theme)
+    $template_path = get_stylesheet_directory() . '/template-parts/email-user-signup.php';
+    if (file_exists($template_path)) {
+        include $template_path;
+    } else {
+        // Fallback: simple message
+        ?>
+        <p><?php printf('Hi %s,', esc_html($user_first_name)); ?></p>
+        <p><?php printf('Thanks for creating an account on %1$s. Your username is %2$s. You can access your account area to view orders, change your password, and more at: %3$s', esc_html($blogname), '<strong>' . esc_html($user_login) . '</strong>', esc_url(home_url('/my-account/'))); ?></p>
+        <p><a href="<?php echo esc_attr($set_password_url); ?>">Click here to set your new password.</a></p>
+        <p>Join our community of bakers on our Facebook page! <a href="https://www.facebook.com/dpipedreams/">HERE</a></p>
+        <?php
+    }
+    $message = ob_get_clean();
+
+    $subject = 'The Piped Peony';
+    $headers = array('Content-Type: text/html; charset=UTF-8', 'From: The Piped Peony <noreply@thepipedpeony.com>');
+    wp_mail($email, $subject, $message, $headers);
+}
+
+// Securely store registration data server-side and retrieve by token
+function store_pending_registration($token, $data) {
+    // Store for 1 hour
+    set_transient('pending_registration_' . $token, $data, HOUR_IN_SECONDS);
+}
+
+function get_pending_registration($token) {
+    $data = get_transient('pending_registration_' . $token);
+    if ($data) {
+        delete_transient('pending_registration_' . $token);
+    }
+    return $data;
+}
+
+function send_invoice_email($user_id, $order_data = []) {
+    $user = get_userdata($user_id);
+    if (!$user) {
+        error_log('[Send Invoice Email] User not found for ID: ' . $user_id);
+        return;
+    }
+    $user_first_name = $user->first_name ? $user->first_name : $user->user_login;
+    $blogname = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
+
+    // Initialize variables for the template
+    $template_vars = [
+        'user_first_name' => $user_first_name,
+        'blogname'        => $blogname,
+        'order_items'     => '', // Default to empty, will be populated if it's a non-subscription or specific data passed
+        'order_total'     => '',
+        'shipping_info'   => '',
+        'billing_info'    => '',
+        'order_date'      => date('Y-m-d'),
+        'order_id'        => 'N/A',
+        'is_subscription' => false,
+        'subscription_product_name' => '',
+        'subscription_price_details' => '',
+        'trial_info'      => '',
+        'renewal_info'    => ''
+    ];
+
+    if (isset($order_data['stripe_checkout_session_id'])) {
+        error_log('[Send Invoice Email] Processing Stripe Checkout Session ID: ' . $order_data['stripe_checkout_session_id']);
+        try {
+            $checkout_session = \Stripe\Checkout\Session::retrieve(
+                $order_data['stripe_checkout_session_id'], 
+                ['expand' => ['line_items', 'line_items.data.price.product', 'subscription', 'customer']]
+            );
+
+            $template_vars['order_date'] = date('F j, Y', $checkout_session->created);
+            $template_vars['order_id'] = $checkout_session->id; // Using checkout session ID as order ID
+            $template_vars['order_total'] = '$' . number_format($checkout_session->amount_total / 100, 2);
+
+            // Customer and address details (more robustly)
+            $customer_details = $checkout_session->customer_details;
+            if ($customer_details) {
+                $template_vars['user_first_name'] = $customer_details->name ? explode(' ', $customer_details->name)[0] : $user_first_name;
+                if ($customer_details->address) {
+                    $billing_address = $customer_details->address;
+                    $template_vars['billing_info'] = esc_html($customer_details->name) . "\n" . 
+                                           implode("\n", array_filter([
+                                               $billing_address->line1,
+                                               $billing_address->line2,
+                                               trim(sprintf('%s, %s %s', $billing_address->city, $billing_address->state, $billing_address->postal_code)),
+                                               $billing_address->country
+                                           ]));
+                } else {
+                    $template_vars['billing_info'] = esc_html($customer_details->name) . "\nBilling address not provided.";
+                }
+            } else {
+                 $template_vars['billing_info'] = "Billing details not available.";
+            }
+            
+            $shipping_details = $checkout_session->shipping_details;
+            if ($shipping_details && $shipping_details->address) {
+                $shipping_address = $shipping_details->address;
+                $template_vars['shipping_info'] = esc_html($shipping_details->name) . "\n" . 
+                                       implode("\n", array_filter([
+                                           $shipping_address->line1,
+                                           $shipping_address->line2,
+                                           trim(sprintf('%s, %s %s', $shipping_address->city, $shipping_address->state, $shipping_address->postal_code)),
+                                           $shipping_address->country
+                                       ]));
+            } else {
+                $template_vars['shipping_info'] = 'No shipping required or provided.';
+            }
+
+            if ($checkout_session->mode == 'subscription' && $checkout_session->subscription) {
+                $template_vars['is_subscription'] = true;
+                $stripe_subscription = $checkout_session->subscription; // Already expanded
+
+                if (!empty($checkout_session->line_items->data)) {
+                    $item = $checkout_session->line_items->data[0];
+                    // Try to get product name from expanded product data first
+                    if (isset($item->price->product) && is_object($item->price->product) && isset($item->price->product->name)) {
+                        $template_vars['subscription_product_name'] = esc_html($item->price->product->name);
+                    } else {
+                        $template_vars['subscription_product_name'] = esc_html($item->description); // Fallback to description
+                    }
+                    error_log('[Send Invoice Email] Subscription Product Name: ' . $template_vars['subscription_product_name']);
+
+                    if ($item->price && $item->price->recurring) {
+                        $price_amount = $item->price->unit_amount / 100;
+                        $interval = $item->price->recurring->interval;
+                        $interval_count = $item->price->recurring->interval_count;
+                        $interval_str = $interval_count > 1 ? $interval_count . ' ' . $interval . 's' : $interval; // Corrected pluralization
+                        $template_vars['subscription_price_details'] = sprintf('$%.2f / %s', $price_amount, ucfirst($interval_str));
+                        error_log('[Send Invoice Email] Subscription Price Details: ' . $template_vars['subscription_price_details']);
+                    }
+                }
+
+                if ($stripe_subscription->trial_end) {
+                    $trial_end_date_str = date('F j, Y', $stripe_subscription->trial_end);
+                    $template_vars['trial_info'] = sprintf(
+                        'Your free trial for \'%s\' ends on %s.',
+                        $template_vars['subscription_product_name'], // Already esc_html'd
+                        $trial_end_date_str
+                    );
+                    // Renewal info when there IS a trial
+                    $template_vars['renewal_info'] = sprintf(
+                        'After the trial, your first charge of %s will be on %s.',
+                        $template_vars['subscription_price_details'], // Already esc_html'd and formatted
+                        $trial_end_date_str
+                    );
+                     error_log('[Send Invoice Email] Trial Info: ' . $template_vars['trial_info'] . ' Renewal Info: ' . $template_vars['renewal_info']);
+                } else {
+                    // Renewal info when there is NO trial
+                    $template_vars['renewal_info'] = 'Your subscription renews on: ' . date('F j, Y', $stripe_subscription->current_period_end) . '.';
+                     error_log('[Send Invoice Email] No Trial. Renewal Info: ' . $template_vars['renewal_info']);
+                }
+                
+                $template_vars['order_items'] = sprintf(
+                    '<tr><td>%s</td><td>1</td><td>%s</td><td>%s</td></tr>',
+                    $template_vars['subscription_product_name'], // Already esc_html'd
+                    $template_vars['subscription_price_details'], 
+                    $template_vars['order_total'] 
+                );
+
+            } else if ($checkout_session->mode == 'payment') {
+                // Build order items HTML for non-subscription one-time payments
+                $order_items_html = '';
+                 if (!empty($checkout_session->line_items->data)) {
+                    foreach ($checkout_session->line_items->data as $item) {
+                        $unit_price = ($item->quantity > 0 && $item->amount_total > 0) ? ($item->amount_total / 100 / $item->quantity) : 0;
+                        $line_total = $item->amount_total / 100;
+                        $order_items_html .= sprintf(
+                            '<tr><td>%s</td><td>%d</td><td>$%s</td><td>$%s</td></tr>',
+                            esc_html($item->description),
+                            esc_html($item->quantity),
+                            number_format($unit_price, 2),
+                            number_format($line_total, 2)
+                        );
+                    }
+                }
+                $template_vars['order_items'] = $order_items_html;
+            }
+        } catch (Exception $e) {
+            error_log('[Send Invoice Email] Error retrieving Stripe session: ' . $e->getMessage());
+            // Use defaults if Stripe session retrieval fails
+            $template_vars['order_id'] = 'Error retrieving details';
+        }
+    } else {
+        // Fallback for when stripe_checkout_session_id is not provided (old calls or direct calls without ID)
+        // This part might be deprecated or simplified if all calls will include the ID.
+        error_log('[Send Invoice Email] stripe_checkout_session_id not provided. Using minimal data for user ID: ' . $user_id);
+        $template_vars['order_items'] = isset($order_data['items']) ? $order_data['items'] : 'Details not available.';
+        $template_vars['order_total'] = isset($order_data['total']) ? $order_data['total'] : 'N/A';
+        $template_vars['shipping_info'] = isset($order_data['shipping']) ? nl2br(esc_html($order_data['shipping'])) : 'N/A';
+        $template_vars['billing_info'] = isset($order_data['billing']) ? nl2br(esc_html($order_data['billing'])) : 'N/A';
+        $template_vars['order_date'] = isset($order_data['date']) ? esc_html($order_data['date']) : date('Y-m-d');
+        $template_vars['order_id'] = isset($order_data['id']) ? esc_html($order_data['id']) : 'N/A';
+    }
+
+    ob_start();
+    // Pass vars to the template scope using extract()
+    extract($template_vars);
+    $template_path = get_stylesheet_directory() . '/template-parts/email-invoice.php';
+    if (file_exists($template_path)) {
+        include $template_path;
+    } else {
+        error_log('[Send Invoice Email] Template not found: ' . $template_path);
+        echo '<p>Thank you for your purchase! Email template is missing.</p>';
+    }
+    $message = ob_get_clean();
+
+    $subject = sprintf('Your Invoice from %s', $blogname); // Subject can be refined too
+    if ($template_vars['is_subscription']) {
+        $subject = sprintf('Your Subscription Invoice from %s - %s', $blogname, $template_vars['subscription_product_name']);
+    } else {
+        $subject = sprintf('Your Order Confirmation from %s - Order %s', $blogname, $template_vars['order_id']);
+    }
+
+    $headers = array('Content-Type: text/html; charset=UTF-8', 'From: The Piped Peony <noreply@thepipedpeony.com>');
+    if (wp_mail($user->user_email, $subject, $message, $headers)) {
+        error_log('[Send Invoice Email] Email sent successfully to: ' . $user->user_email . ' for order/session: ' . $template_vars['order_id']);
+    } else {
+        error_log('[Send Invoice Email] Failed to send email to: ' . $user->user_email . ' for order/session: ' . $template_vars['order_id']);
+    }
+}
+
+/**
+ * Redirect users to the video library after login, unless they are administrators.
+ */
+function tpp_custom_login_redirect( $redirect_to, $request, $user ) {
+    // Is there a user? (Allows redirects for non-logged-in users if needed, though not applicable here)
+    if ( isset( $user->roles ) && is_array( $user->roles ) ) {
+        // Check if the user is an administrator
+        if ( in_array( 'administrator', $user->roles ) ) {
+            // Administrators go to the default dashboard
+            return admin_url(); // Explicitly send admins to dashboard
+        } elseif ( in_array( 'subscriber', $user->roles ) ) {
+            // Active subscribers go to the video library
+            return home_url('/video-library/');
+        } else {
+            // Other roles (like subscriber_inactive, pending, etc.) go to the homepage
+            return home_url('/'); 
+        }
+    }
+    // Fallback to default redirect (usually wp-admin) if user data isn't available or roles aren't set
+    return $redirect_to;
+}
+add_filter( 'login_redirect', 'tpp_custom_login_redirect', 10, 3 );
+
+/**
+ * Hide the admin bar for non-administrators on the frontend.
+ */
+function tpp_hide_admin_bar() {
+    if ( ! current_user_can( 'administrator' ) && ! is_admin() ) {
+        show_admin_bar( false );
+    }
+}
+add_action( 'after_setup_theme', 'tpp_hide_admin_bar' );
+
+/**
+ * Prevent non-administrators from accessing the WordPress admin area.
+ */
+function tpp_redirect_non_admins_from_dashboard() {
+    // Check if it's an admin area request, not an AJAX request, and the user is not an admin
+    if ( is_admin() && ! current_user_can( 'administrator' ) && ! wp_doing_ajax() ) {
+        wp_redirect( home_url('/video-library/') ); // Redirect to video library
+        exit;
+    }
+}
+add_action( 'admin_init', 'tpp_redirect_non_admins_from_dashboard' );
+
+// AJAX handler for direct to Stripe checkout from single product page
+// add_action('wp_ajax_nopriv_direct_to_stripe', 'handle_direct_to_stripe'); // This will be replaced by handle_add_to_cart_and_redirect for single-product page
+// add_action('wp_ajax_direct_to_stripe', 'handle_direct_to_stripe'); // This will be replaced by handle_add_to_cart_and_redirect for single-product page
+
+
+// New AJAX handler for adding to cart from single product page
+add_action('wp_ajax_nopriv_add_to_cart_and_redirect', 'handle_add_to_cart_and_redirect');
+add_action('wp_ajax_add_to_cart_and_redirect', 'handle_add_to_cart_and_redirect');
+
+function handle_add_to_cart_and_redirect() {
+    if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'add_to_cart_and_redirect_nonce')) { 
+        wp_send_json_error(['error' => 'Invalid security token for add to cart.']);
+        return;
+    }
+
+    $product_id = isset($_POST['product_id']) ? intval($_POST['product_id']) : 0;
+    $quantity = isset($_POST['quantity']) ? intval($_POST['quantity']) : 1;
+    $stripe_price_id = isset($_POST['stripe_price_id']) ? sanitize_text_field(wp_unslash($_POST['stripe_price_id'])) : '';
+    $variation_name = isset($_POST['variation']) ? sanitize_text_field(wp_unslash($_POST['variation'])) : ''; // From selected-variation input
+
+    if (!$product_id || $quantity < 1) {
+        wp_send_json_error(['error' => 'Missing or invalid product data for add to cart.']);
+        return;
+    }
+
+    if (!session_id()) {
+        session_start();
+    }
+    if (!isset($_SESSION['cart'])) {
+        $_SESSION['cart'] = [];
+    }
+
+    $product_type = get_field('product_type', $product_id);
+    $product_title = get_the_title($product_id);
+    $image_url = get_the_post_thumbnail_url($product_id, 'thumbnail');
+    $price = 0;
+
+    if ($product_type === 'variation' && !empty($variation_name)) {
+        $variations_field = get_field('variation_product', $product_id);
+        if ($variations_field) {
+            foreach ($variations_field as $index => $var) {
+                if ($var['product_variation'] === $variation_name) {
+                    $price = floatval($var['variable_product_price']);
+                    // Stripe Price ID for variation is passed from JS, derived from button data attributes
+                    // $stripe_price_id is already set from POST
+                    $product_title .= ' - ' . $variation_name; // Append variation name to title
+                    break;
+                }
+            }
+        }
+    } elseif ($product_type === 'single') {
+        $price = floatval(get_field('product_price', $product_id));
+        // $stripe_price_id is already set from POST (main product's price ID)
+    } elseif ($product_type === 'subscription') {
+        // For subscriptions, price ID is crucial for checkout page.
+        // Price itself isn't summed in cart if trial, but good to store.
+        $price = floatval(get_field('subscription_price', $product_id));
+        // $stripe_price_id is already set from POST
+    }
+
+
+    // Basic check for price, essential for non-subscription
+    if ($product_type !== 'subscription' && empty($stripe_price_id)) {
+         wp_send_json_error(['error' => 'Stripe Price ID is missing. Cannot add to cart.']);
+         return;
+    }
+     if ($product_type !== 'subscription' && $price <= 0) {
+        wp_send_json_error(['error' => 'Product price is invalid. Cannot add to cart.']);
+        return;
+    }
+
+
+    $cart_item_key = $product_id . ($variation_name ? '_' . md5($variation_name) : '');
+
+    if (isset($_SESSION['cart'][$cart_item_key])) {
+        $_SESSION['cart'][$cart_item_key]['quantity'] += $quantity;
+    } else {
+        $_SESSION['cart'][$cart_item_key] = [
+            'product_id'        => $product_id,
+            'quantity'          => $quantity,
+            'name'              => $product_title,
+            'price'             => $price,
+            'stripe_price_id'   => $stripe_price_id,
+            'variation_name'    => $variation_name,
+            'product_type'      => $product_type,
+            'image_url'         => $image_url ? $image_url : '', // Fallback to empty string if no image
+        ];
+    }
+
+    $redirect_url = '';
+    if ($product_type === 'subscription') {
+        // For subscriptions, we'll clear the cart and redirect to checkout page,
+        // which will populate its own cart with this single subscription item.
+        $_SESSION['cart'] = []; // Clear cart
+         $_SESSION['cart'][$cart_item_key] = [ // Add only the subscription item
+            'product_id'        => $product_id,
+            'quantity'          => $quantity,
+            'name'              => $product_title,
+            'price'             => $price, // Store it, even if $0 for trial for display
+            'stripe_price_id'   => $stripe_price_id,
+            'variation_name'    => '', // Subscriptions are not variations
+            'product_type'      => $product_type,
+            'image_url'         => $image_url ? $image_url : '',
+        ];
+        $redirect_url = home_url('/checkout/') . '?checkout_product_id=' . $product_id . '&quantity=' . $quantity;
+    } else { // Simple or Variation
+        $redirect_url = home_url('/cart/');
+    }
+
+    wp_send_json_success(['redirect_url' => $redirect_url, 'cart' => $_SESSION['cart']]);
+}
+
+
+// AJAX handler for updating cart quantities from cart page
+add_action('wp_ajax_update_cart_quantities_custom', 'handle_update_cart_quantities_custom');
+add_action('wp_ajax_nopriv_update_cart_quantities_custom', 'handle_update_cart_quantities_custom');
+
+function handle_update_cart_quantities_custom() {
+    if (!session_id()) { session_start(); } // Ensure session is started // DEBUG
+    $posted_nonce = $_POST['cart_nonce'] ?? 'Not set'; // DEBUG
+    $session_nonce_debug = $_SESSION['cart_page_nonce_debug'] ?? 'Not set in session'; // DEBUG
+    // error_log('Update Handler - Posted Nonce: ' . $posted_nonce . ' | Session Nonce (from page load): ' . $session_nonce_debug); // DEBUG
+    $is_verified = wp_verify_nonce($posted_nonce, 'cart_action_nonce'); // DEBUG
+    // error_log('Update Handler - Nonce Verification Result: ' . ($is_verified ? 'Verified' : 'FAILED')); // DEBUG
+
+    // Nonce check (important!)
+    if (!$is_verified) { 
+        wp_send_json_error(['message' => 'Invalid security token for cart update.']);
+        return; 
+    }
+
+    if (!session_id()) {
+        session_start();
+    }
+
+    if (isset($_POST['cart_item_quantities']) && is_array($_POST['cart_item_quantities'])) {
+        $updated_cart_keys = array_keys($_SESSION['cart']); // Get current cart keys in order
+
+        foreach ($_POST['cart_item_quantities'] as $key_index => $quantity) {
+            $quantity = intval($quantity);
+            if ($quantity > 0 && isset($updated_cart_keys[$key_index])) {
+                $actual_cart_key = $updated_cart_keys[$key_index];
+                 if (isset($_SESSION['cart'][$actual_cart_key])) {
+                    $_SESSION['cart'][$actual_cart_key]['quantity'] = $quantity;
+                }
+            }
+        }
+    }
+    // Redirect back to cart page after updating
+    wp_redirect(home_url('/cart/'));
+    exit;
+}
+
+// AJAX handler for removing item from cart page
+add_action('wp_ajax_remove_cart_item_custom', 'handle_remove_cart_item_custom');
+add_action('wp_ajax_nopriv_remove_cart_item_custom', 'handle_remove_cart_item_custom');
+
+function handle_remove_cart_item_custom() {
+    if (!isset($_POST['cart_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['cart_nonce'])), 'cart_update_nonce')) {
+        wp_die('Security check failed for cart removal.'); // Simple error for now
+        return;
+    }
+
+    if (!session_id()) {
+        session_start();
+    }
+
+    $item_key_to_remove = isset($_POST['item_key']) ? sanitize_text_field(wp_unslash($_POST['item_key'])) : null;
+
+    if ($item_key_to_remove !== null && isset($_SESSION['cart'][$item_key_to_remove])) {
+        unset($_SESSION['cart'][$item_key_to_remove]);
+    }
+    // Always redirect back to the cart page
+    wp_redirect(home_url('/cart/'));
+    exit; // Ensure no further output after redirect
+}
+
+
+function handle_direct_to_stripe() {
+// ... existing code ...
+}
+
+// New AJAX handler for Cart Page "Proceed to Checkout" button
+add_action('wp_ajax_cart_to_stripe_checkout', 'handle_cart_to_stripe_checkout');
+add_action('wp_ajax_nopriv_cart_to_stripe_checkout', 'handle_cart_to_stripe_checkout');
+
+function handle_cart_to_stripe_checkout() {
+    // 1. Nonce Check
+    if (!isset($_POST['cart_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['cart_nonce'])), 'cart_action_nonce')) {
+        wp_send_json_error(['message' => 'Invalid security token for Stripe checkout.']);
+        return;
+    }
+
+    // 2. Start session and get cart
+    if (!session_id()) {
+        session_start();
+    }
+    $cart = $_SESSION['cart'] ?? [];
+
+    if (empty($cart)) {
+        wp_send_json_error(['message' => 'Your cart is empty.']);
+        return;
+    }
+
+    try {
+        // 3. Ensure Stripe SDK is loaded
+        if (!class_exists('\Stripe\Stripe')) {
+            require_once get_stylesheet_directory() . '/vendor/autoload.php';
+        }
+        
+        // 4. Set Stripe API Key from wp-config.php
+        if (!defined('STRIPE_SECRET_KEY')) {
+            error_log('Stripe Secret Key is not defined.');
+            wp_send_json_error(['message' => 'Stripe configuration error. Please contact support.']);
+            return;
+        }
+        \Stripe\Stripe::setApiKey(STRIPE_SECRET_KEY);
+
+        // 5. Prepare Line Items
+        $line_items = [];
+        $needs_shipping = false;
+
+        foreach ($cart as $item_key => $item) {
+            if (empty($item['stripe_price_id']) || empty($item['quantity'])) {
+                // error_log('Skipping cart item due to missing Stripe Price ID or quantity: ' . print_r($item, true)); // Potentially logs cart item data
+                continue; // Skip invalid items
+            }
+
+            $line_items[] = [
+                'price'    => $item['stripe_price_id'],
+                'quantity' => $item['quantity'],
+            ];
+
+            // Assume all products from cart page (simple/variation) need shipping
+            // Subscription products are handled separately on single product page and go to /checkout page
+            if ($item['product_type'] === 'single' || $item['product_type'] === 'variation') {
+                $needs_shipping = true;
+            }
+        }
+
+        if (empty($line_items)) {
+            wp_send_json_error(['message' => 'No valid items in cart to proceed to checkout.']);
+            return;
+        }
+
+        // 6. Define success and cancel URLs
+        $success_url = home_url('/checkout-success?session_id={CHECKOUT_SESSION_ID}');
+        $cancel_url = home_url('/cart/'); // Return to cart if they cancel
+
+        // 7. Prepare Session Parameters
+        $session_params = [
+            'payment_method_types' => ['card'],
+            'line_items'           => $line_items,
+            'mode'                 => 'payment', // Explicitly payment mode for items from cart page
+            'success_url'          => $success_url,
+            'cancel_url'           => $cancel_url,
+        ];
+
+        // 8. Customer Email (if logged in)
+        if (is_user_logged_in()) {
+            $current_user = wp_get_current_user();
+            if ($current_user && !empty($current_user->user_email)) {
+                $session_params['customer_email'] = $current_user->user_email;
+            }
+        }
+
+        // 9. Shipping Address Collection
+        if ($needs_shipping) {
+            $session_params['shipping_address_collection'] = [
+                'allowed_countries' => ['US'], // Adjust as needed
+            ];
+             // Request phone number if shipping physical goods
+            $session_params['phone_number_collection'] = ['enabled' => true];
+        }
+
+        // Add payment_intent_data description
+        $product_names = array_map(function($item) { 
+            return isset($item['name']) ? $item['name'] : 'Unknown Product'; 
+        }, $cart); // Use original cart data here
+        
+        $description = implode(', ', array_slice($product_names, 0, 3)); 
+        if (count($product_names) > 3) {
+            $description .= '...';
+        }
+        if (strlen($description) > 150) {
+            $description = substr($description, 0, 147) . '...';
+        }
+        
+        $session_params['payment_intent_data'] = [
+            'description' => $description ?: 'Website Order', // Ensure fallback
+        ];
+        error_log('[Cart Checkout] Setting Payment Intent Description: ' . ($description ?: 'Website Order'));
+
+        // 10. Create Stripe Checkout Session
+        $checkout_session = \Stripe\Checkout\Session::create($session_params);
+
+        wp_send_json_success(['url' => $checkout_session->url]);
+
+    } catch (Exception $e) {
+        // error_log('Cart to Stripe Checkout Error: ' . $e->getMessage()); // Log less specific message if needed
+        wp_send_json_error(['message' => 'Could not initiate Stripe checkout. Please try again later.']);
+    }
+    wp_die();
+}
+
+/**
+ * AJAX handler to check if a Stripe customer exists with the given email.
+ */
+add_action('wp_ajax_nopriv_check_stripe_customer_email', 'handle_check_stripe_customer_email');
+add_action('wp_ajax_check_stripe_customer_email', 'handle_check_stripe_customer_email'); // Also check for logged-in users, just in case
+
+function handle_check_stripe_customer_email() {
+    // 1. Verify Nonce
+    check_ajax_referer('check_email_nonce', 'nonce');
+
+    // 2. Sanitize Email
+    $email = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
+
+    if (empty($email) || !is_email($email)) {
+        wp_send_json_error(['message' => 'Invalid email address provided.'], 400);
+        return;
+    }
+
+    // 3. Include Stripe Library & Set Key (Ensure it's not already done)
+    // Note: Consider a more robust way to load this, perhaps in an init hook.
+    $stripe_vendor_path = get_template_directory() . '/vendor/autoload.php';
+    if (file_exists($stripe_vendor_path) && !class_exists('\Stripe\Stripe')) {
+        require_once $stripe_vendor_path;
+    } else if (!class_exists('\Stripe\Stripe')) {
+        error_log('Stripe vendor autoload not found at: ' . $stripe_vendor_path);
+        wp_send_json_error(['message' => 'Server configuration error [Stripe Library].'], 500);
+        return;
+    }
+
+    // Ensure API Key is defined
+    if (!defined('STRIPE_SECRET_KEY') || empty(STRIPE_SECRET_KEY)) {
+         error_log('Stripe Secret Key (STRIPE_SECRET_KEY) is not defined in wp-config.php or elsewhere.');
+         wp_send_json_error(['message' => 'Server configuration error [Stripe Key].'], 500);
+         return;
+    }
+
+    try {
+        // Check if Stripe client is already initialized; if not, set the API key.
+        // Note: Stripe library might handle this internally, but being explicit can help avoid issues.
+        if (\Stripe\Stripe::getApiKey() === null) { 
+             \Stripe\Stripe::setApiKey(STRIPE_SECRET_KEY);
+        }
+
+        // 4. Search for Stripe Customer
+        $customers = \Stripe\Customer::all(['email' => $email, 'limit' => 1]);
+
+        $exists = !empty($customers->data);
+
+        // 5. Send JSON Response
+        wp_send_json_success(['exists' => $exists]);
+
+    } catch (\Stripe\Exception\ApiErrorException $e) {
+        // error_log("Stripe API Error checking email ({$email}): " . $e->getMessage()); // Logs email
+        error_log("Stripe API Error checking email: A problem occurred.");
+        wp_send_json_error(['message' => 'Could not verify email with payment processor. Please try again later.'], 500);
+    } catch (\Exception $e) {
+        // error_log("General Error checking email ({$email}): " . $e->getMessage()); // Logs email
+        error_log("General Error checking email: An unexpected error occurred.");
+        wp_send_json_error(['message' => 'An unexpected error occurred. Please try again.'], 500);
+    }
+}
+
+/**
+ * Display a notice in the header for unverified users.
+ */
+function display_unverified_email_header_notice() {
+    if (is_user_logged_in()) {
+        $user_id = get_current_user_id();
+        $email_verified = get_user_meta($user_id, 'email_verified', true);
+        $user = get_userdata($user_id);
+
+        // Display notice if email is not verified (meta is '0')
+        // Also ensure they are not an admin, as admins might not need to verify or could be testing.
+        if ($email_verified === '0' && $user && !in_array('administrator', $user->roles)) {
+            $resend_nonce = wp_create_nonce('resend_verification_email_nonce_' . $user_id);
+            echo '<div id="email-verification-notice" style="background-color: #fff3cd; color: #856404; padding: 15px; text-align: center; border-bottom: 1px solid #ffeeba;">';
+            echo 'Your email address is not verified. Please check your inbox (and spam folder) for a verification link. ';
+            echo '<a href="#" id="resend-verification-link" data-user-id="' . esc_attr($user_id) . '" data-nonce="' . esc_attr($resend_nonce) . '">Resend verification email</a>';
+            echo '<span id="resend-verification-message" style="margin-left: 10px;"></span>';
+            echo '</div>';
+        }
+    }
+}
+add_action('wp_body_open', 'display_unverified_email_header_notice');
+
+/**
+ * AJAX handler to resend the verification email from the header notice.
+ */
+add_action('wp_ajax_resend_verification_from_notice', 'handle_resend_verification_from_notice');
+
+function handle_resend_verification_from_notice() {
+    $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+    $nonce = isset($_POST['nonce']) ? sanitize_text_field($_POST['nonce']) : '';
+
+    // Verify nonce and that the current user is the one requesting (or an admin)
+    if (!wp_verify_nonce($nonce, 'resend_verification_email_nonce_' . $user_id) || $user_id === 0) {
+        wp_send_json_error(['message' => 'Security check failed.']);
+        return;
+    }
+
+    // Check if the user trying to resend is the actual user or an admin.
+    // This prevents a logged-in user from trying to resend for another user_id via manipulated JS.
+    if (get_current_user_id() != $user_id && !current_user_can('manage_options')) {
+        wp_send_json_error(['message' => 'Permission denied.']);
+        return;
+    }
+
+    $user = get_userdata($user_id);
+    if (!$user) {
+        wp_send_json_error(['message' => 'User not found.']);
+        return;
+    }
+
+    // Check if already verified
+    if (get_user_meta($user_id, 'email_verified', true) === '1') {
+        wp_send_json_success(['message' => 'Email already verified.']);
+        return;
+    }
+
+    // Call the existing function to resend the email
+    // The custom_user_registered function now correctly sets role to pending and sends email.
+    // We can simply call that, it will regenerate token and send.
+    custom_user_registered($user_id); 
+
+    wp_send_json_success(['message' => 'Verification email resent. Please check your inbox.']);
+}
+
+// Script for the resend verification link in the header notice
+function unverified_notice_ajax_script() {
+    if (is_user_logged_in()) { // Only output script if user is logged in
+        $user_id = get_current_user_id();
+        $email_verified = get_user_meta($user_id, 'email_verified', true);
+        $user = get_userdata($user_id);
+
+        if ($email_verified === '0' && $user && !in_array('administrator', $user->roles)) {
+        ?>
+        <script type="text/javascript">
+            document.addEventListener('DOMContentLoaded', function() {
+                const resendLink = document.getElementById('resend-verification-link');
+                const messageSpan = document.getElementById('resend-verification-message');
+
+                if (resendLink) {
+                    resendLink.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        if (!messageSpan) return;
+
+                        messageSpan.textContent = 'Sending...';
+                        resendLink.style.pointerEvents = 'none'; // Disable link temporarily
+
+                        const userId = this.getAttribute('data-user-id');
+                        const nonce = this.getAttribute('data-nonce');
+
+                        const formData = new FormData();
+                        formData.append('action', 'resend_verification_from_notice');
+                        formData.append('user_id', userId);
+                        formData.append('nonce', nonce);
+
+                        fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                messageSpan.textContent = data.data.message;
+                                messageSpan.style.color = 'green';
+                            } else {
+                                messageSpan.textContent = 'Error: ' + (data.data.message || 'Could not resend email.');
+                                messageSpan.style.color = 'red';
+                                resendLink.style.pointerEvents = 'auto'; // Re-enable link on error
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error resending verification email:', error);
+                            messageSpan.textContent = 'Request failed. Please try again.';
+                            messageSpan.style.color = 'red';
+                            resendLink.style.pointerEvents = 'auto'; // Re-enable link on error
+                        });
+                    });
+                }
+            });
+        </script>
+        <?php
+        }
+    }
+}
+add_action('wp_footer', 'unverified_notice_ajax_script');
+
+
+/**
+ * Schedules the daily check for unverified users if it's not already scheduled.
+ */
+function schedule_daily_unverified_user_check() {
+    if (!wp_next_scheduled('daily_check_unverified_users_hook')) {
+        // Schedule to run daily. The time parameter sets the first run time.
+        // time() + 60 means it will run for the first time 1 minute after this code is executed.
+        // subsequent runs will be ~24 hours after the first successful run.
+        wp_schedule_event(time() + 60, 'daily', 'daily_check_unverified_users_hook');
+        error_log('Scheduled daily unverified user check.');
+    }
+}
+// You might want to run this schedule setup function on theme activation,
+// but for simplicity now, we hook it to init to ensure it gets scheduled.
+// It won't reschedule if already scheduled due to the check inside.
+add_action('init', 'schedule_daily_unverified_user_check');
+
+/**
+ * The function executed by the daily cron job.
+ * Checks for users registered more than 7 days ago who are still unverified
+ * and changes their role to 'pending'.
+ */
+function check_unverified_users_daily() {
+    error_log('Running daily check for unverified users...');
+
+    $seven_days_ago = time() - (7 * DAY_IN_SECONDS); // Use WordPress constant for clarity
+
+    // Prepare arguments to get users who are 'subscriber' and unverified
+    // We specifically look for subscribers so we don't accidentally demote admins
+    // or affect users who might already be 'pending' or 'inactive'.
+    $args = array(
+        'role'    => 'subscriber', // Only check users currently with the subscriber role
+        'meta_query' => array(
+            'relation' => 'AND', // Both conditions must be met
+            array(
+                'key'     => 'email_verified',
+                'value'   => '0', // Must be unverified
+                'compare' => '=',
+            ),
+            array(
+                'key'     => 'registration_date', // Must have a registration date set
+                'compare' => 'EXISTS',
+            ),
+        ),
+        'fields' => array('ID', 'user_registered'), // Get only necessary fields
+    );
+
+    $unverified_subscribers = get_users($args);
+
+    if (empty($unverified_subscribers)) {
+        error_log('No unverified subscribers found needing role change.');
+        return; // No users found matching the criteria
+    }
+
+    error_log('Found ' . count($unverified_subscribers) . ' unverified subscribers to check.');
+
+    foreach ($unverified_subscribers as $user) {
+        $user_id = $user->ID;
+        $registration_timestamp = get_user_meta($user_id, 'registration_date', true);
+
+        // Double check we have a valid timestamp
+        if (!is_numeric($registration_timestamp)) {
+             error_log('Skipping user ID ' . $user_id . ' due to invalid registration_date meta: ' . $registration_timestamp);
+             continue;
+        }
+
+        // Check if registration date is older than 7 days
+        if ((int)$registration_timestamp < $seven_days_ago) {
+            error_log('User ID ' . $user_id . ' registered on ' . date('Y-m-d H:i:s', $registration_timestamp) . ' is past 7 days and unverified. Changing role to pending.');
+            // Change the user's role to 'pending'
+            $wp_user = new WP_User($user_id);
+            $wp_user->set_role('pending');
+        } else {
+             error_log('User ID ' . $user_id . ' registered on ' . date('Y-m-d H:i:s', $registration_timestamp) . ' is still within 7 day grace period.');
+        }
+    }
+     error_log('Finished daily check for unverified users.');
+}
+// Hook the function to the scheduled event's action hook
+add_action('daily_check_unverified_users_hook', 'check_unverified_users_daily');
+
+
+/**
+ * Function to clear the scheduled event upon theme deactivation (optional but good practice)
+ */
+function unschedule_daily_unverified_user_check() {
+    $timestamp = wp_next_scheduled('daily_check_unverified_users_hook');
+    if ($timestamp) {
+        wp_unschedule_event($timestamp, 'daily_check_unverified_users_hook');
+        error_log('Unscheduled daily unverified user check.');
+    }
+}
+add_action('switch_theme', 'unschedule_daily_unverified_user_check');
+
+/**
+ * AJAX handler to check current user login status.
+ * Used on the checkout success page to update UI after auto-login from webhook.
+ */
+add_action('wp_ajax_nopriv_check_login_status_after_checkout', 'handle_check_login_status_after_checkout');
+add_action('wp_ajax_check_login_status_after_checkout', 'handle_check_login_status_after_checkout');
+
+function handle_check_login_status_after_checkout() {
+    // No nonce is strictly needed for just checking is_user_logged_in(),
+    // as it doesn't perform state-changing actions based on non-validated input here.
+    // However, for consistency or if you expand it later, you might add one.
+    wp_send_json_success(['logged_in' => is_user_logged_in()]);
+}
